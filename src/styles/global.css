@@ -630,6 +630,76 @@ html.js-reveal [data-reveal].is-revealed{ opacity:1; transform:translateY(0); }
 .pricing-list svg{ flex:none; width:16px; height:16px; margin-top:.15rem; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .pricing-micro{ text-align:center; margin-top:.9rem; font-size:.78rem; color:var(--dim); }
 
+/* ============ BLOG ============ */
+.blog-index{ min-height:60vh; }
+.post-list{ max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:1.25rem; }
+.post-card{
+  display:block;
+  padding:1.6rem 1.75rem;
+  background:var(--surface-0);
+  border:1px solid var(--border-soft);
+  border-radius:16px;
+  transition:border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+.post-card:hover{ background:var(--surface-1); border-color:var(--border); transform:translateY(-2px); }
+.post-card h3{ margin:.5rem 0 .55rem; font-size:1.25rem; font-weight:650; color:var(--text); }
+.post-card p{ font-size:.95rem; line-height:1.6; color:var(--text-2); }
+.post-date{ font-family:var(--font-mono); font-size:.72rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+.post-more{ display:inline-block; margin-top:1rem; font-size:.85rem; font-weight:600; color:var(--accent); }
+
+.post .wrap{ max-width:840px; }
+.post-head{ text-align:center; margin-bottom:2.75rem; }
+.post-head .eyebrow a{ color:var(--accent-2); }
+.post-head .eyebrow a:hover{ color:var(--accent); }
+.post-head h1{
+  font-size:clamp(1.9rem,4vw,2.9rem);
+  font-weight:700; line-height:1.15; color:var(--text);
+  text-wrap:balance;
+  margin-bottom:1rem;
+}
+.post-prose{
+  max-width:720px; margin:0 auto;
+  font-size:1.05rem; line-height:1.75; color:var(--text-2);
+}
+.post-prose h2{
+  margin:2.4rem 0 .9rem;
+  font-size:1.45rem; font-weight:650; color:var(--text);
+  text-wrap:balance;
+}
+.post-prose h3{ margin:1.9rem 0 .7rem; font-size:1.15rem; font-weight:650; color:var(--text); }
+.post-prose p{ margin:0 0 1.15rem; }
+.post-prose a{ color:var(--accent); text-decoration:underline; text-underline-offset:3px; text-decoration-color:rgba(201,173,167,.4); }
+.post-prose a:hover{ text-decoration-color:var(--accent); }
+.post-prose strong{ color:var(--text); font-weight:650; }
+.post-prose ul,.post-prose ol{ margin:0 0 1.15rem; padding-left:1.4rem; }
+.post-prose ul{ list-style:disc; }
+.post-prose ol{ list-style:decimal; }
+.post-prose li{ margin-bottom:.5rem; }
+.post-prose li::marker{ color:var(--accent-2); }
+.post-prose code{
+  font-family:var(--font-mono); font-size:.88em;
+  background:var(--surface-1); border:1px solid var(--border-soft);
+  border-radius:6px; padding:.1em .35em;
+}
+.post-prose pre{
+  background:var(--terminal); border:1px solid var(--border-soft);
+  border-radius:12px; padding:1.1rem 1.25rem; overflow-x:auto;
+  margin:0 0 1.15rem;
+}
+.post-prose pre code{ background:none; border:0; padding:0; color:var(--terminal-text); font-size:.85rem; }
+.post-prose blockquote{
+  margin:0 0 1.15rem; padding:.2rem 0 .2rem 1.15rem;
+  border-left:2px solid var(--accent); color:var(--muted);
+}
+.post-cta{
+  max-width:720px; margin:3.5rem auto 0;
+  padding:2rem 2rem 2.2rem; text-align:center;
+  background:var(--surface-0);
+  border:1px solid var(--border-soft); border-radius:18px;
+}
+.post-cta h2{ font-size:1.4rem; font-weight:650; color:var(--text); text-wrap:balance; }
+.post-cta p{ margin:.7rem auto 1.4rem; max-width:480px; font-size:.95rem; line-height:1.6; color:var(--text-2); }
+
 /* ============ WAITLIST MODAL ============ */
 .wl-overlay{
   position:fixed; inset:0; z-index:80;

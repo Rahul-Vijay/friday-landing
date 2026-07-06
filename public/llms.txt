@@ -31,6 +31,9 @@ Key capabilities:
 - [Pricing](https://getfriday.dev/#pricing)
 - [Features](https://getfriday.dev/#features)
 - [How it works](https://getfriday.dev/#how-it-works)
+- [Blog](https://getfriday.dev/blog/): explainers and comparisons on AI coding agents and harnesses.
+- [What is an AI agent harness?](https://getfriday.dev/blog/what-is-an-ai-agent-harness/)
+- [Claude Code vs Codex vs OpenCode](https://getfriday.dev/blog/claude-code-vs-codex-vs-opencode/)
 
 ## Notes for agents
 

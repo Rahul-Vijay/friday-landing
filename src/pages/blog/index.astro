@@ -1,0 +1,46 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+---
+
+<Layout
+  title="Friday blog: AI agents, harnesses, and what's shipping"
+  description="Short, honest takes on AI coding agents: Claude Code, Codex, OpenCode, and the harnesses that run them. From the team building Friday."
+>
+  <Nav />
+  <main>
+    <section class="blog-index">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Blog</p>
+          <h2>Notes from the crew</h2>
+          <p>Short, honest takes on AI agents and the harnesses that run them.</p>
+        </div>
+        <div class="post-list">
+          {
+            posts.map((post) => (
+              <a class="post-card" href={`/blog/${post.id}/`} data-reveal>
+                <time class="post-date" datetime={post.data.pubDate.toISOString()}>
+                  {fmt(post.data.pubDate)}
+                </time>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+                <span class="post-more">Read it</span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

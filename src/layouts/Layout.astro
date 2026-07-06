@@ -56,6 +56,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
       rel="stylesheet"
     />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Friday blog" href="/rss.xml" />
     <StructuredData />
     <script
       is:inline
@@ -76,5 +77,39 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <div class="canvas-atmosphere"></div>
     <slot />
     <WaitlistModal />
+    <script>
+      // Site-wide page chrome: nav backdrop on scroll + quiet scroll-reveal.
+      // Lives here (not in Hero) so blog and future pages get it too.
+      const nav = document.querySelector(".nav");
+      const sentinel = document.createElement("div");
+      sentinel.style.position = "absolute";
+      sentinel.style.top = "0";
+      sentinel.style.height = "1px";
+      document.body.prepend(sentinel);
+      if ("IntersectionObserver" in window) {
+        new IntersectionObserver((entries) => {
+          nav?.classList.toggle("is-scrolled", !entries[0].isIntersecting);
+        }).observe(sentinel);
+      }
+
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reveals = document.querySelectorAll("[data-reveal]");
+      if (reduced || !("IntersectionObserver" in window)) {
+        reveals.forEach((el) => el.classList.add("is-revealed"));
+      } else {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("is-revealed");
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.16, rootMargin: "0px 0px -8% 0px" }
+        );
+        reveals.forEach((el) => io.observe(el));
+      }
+    </script>
   </body>
 </html>
