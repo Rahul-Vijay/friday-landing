@@ -1,0 +1,38 @@
+---
+import { plans, waitlistUrl } from "../content";
+
+const plan = plans[0];
+---
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <p class="eyebrow">Beta launch offer</p>
+      <h2>Half off for the first 100.</h2>
+      <p>Pay once at beta and every update we ship after is yours. Invites go out in waitlist order.</p>
+    </div>
+
+    <div class="pricing-card" data-reveal>
+      <div class="pricing-title-bar"><span>friday — beta launch</span><i></i></div>
+      <div class="pricing-body">
+        <h3>{plan.name}</h3>
+        <div class="price-row"><span class="amount">{plan.price}</span><span class="term">{plan.term}</span></div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-list">
+          {
+            plan.features.map((feat) => (
+              <li>
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 12l5 5L20 6" />
+                </svg>
+                {feat}
+              </li>
+            ))
+          }
+        </ul>
+        <a href={waitlistUrl} class="btn btn-primary btn-block" data-waitlist>{plan.cta}</a>
+        <p class="pricing-micro">{plan.micro}</p>
+      </div>
+    </div>
+  </div>
+</section>

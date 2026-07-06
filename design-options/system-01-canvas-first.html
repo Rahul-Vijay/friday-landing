@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#0c0c17" />
+<title>Friday: set a goal, it builds it</title>
+<meta name="description" content="AI agent harness. Give it a goal; it picks the best model for each task and loops until the work is verified and done. Local-first. Buy once." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230c0c17'/%3E%3Ctext x='12' y='17' font-family='Space Grotesk, sans-serif' font-size='14' font-weight='700' fill='%23c9ada7' text-anchor='middle'%3EF%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js-reveal');try{if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('mock-anim');}}catch(e){}</script>
+<style>
+  /* ============ TOKENS (Friday design system — locked) ============ */
+  :root{
+    --canvas:#0c0c17;
+    --canvas-wash: rgba(9,9,18,.72);
+    --surface-0:#131322;
+    --surface-1:#1b1b2e;
+    --surface-2:#25263d;
+    --surface-3:#32334f;
+    --hover:#3c3d5e;
+    --text:#f2e9e4;
+    --text-2:#d0c3ca;
+    --muted:#aaa0b0;
+    --dim:#766f82;
+    --accent:#c9ada7;
+    --accent-2:#9a8c98;
+    --accent-soft: rgba(201,173,167,.16);
+    --danger:#ef8c99;
+    --success:#9bd4a0;
+    --warning:#dec177;
+    --note:#f2e9e4;
+    --note-ink:#22223b;
+    --terminal:#10101e;
+    --terminal-text:#e2dbe5;
+    --border-soft: rgba(242,233,228,.12);
+    --border: rgba(242,233,228,.22);
+    --border-strong: rgba(201,173,167,.44);
+    --border-float: rgba(242,233,228,.15);
+    --shadow-float: 0 24px 80px rgba(0,0,0,.46);
+    --shadow-note: 0 18px 40px rgba(0,0,0,.30);
+    --inner-highlight: inset 0 1px 0 rgba(255,255,255,.05);
+    --font-ui:'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+    --container: 1180px;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--canvas);
+    color:var(--text);
+    font-family:var(--font-ui);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--accent); color:var(--note-ink); }
+  a{ color:inherit; text-decoration:none; }
+  img,svg{ display:block; }
+  ul{ list-style:none; margin:0; padding:0; }
+  p{ margin:0; }
+  h1,h2,h3{ margin:0; font-family:var(--font-ui); letter-spacing:-.01em; }
+  button{ font-family:inherit; color:inherit; background:none; border:0; cursor:pointer; }
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:3px;
+    border-radius:6px;
+  }
+
+  .wrap{ max-width:var(--container); margin-inline:auto; padding-inline:clamp(1.25rem,4vw,2.5rem); }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    font-weight:600;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent-2);
+    margin:0 0 .9rem;
+  }
+
+  /* ============ CANVAS CHROME (whole page rests on the same lavender canvas) ============ */
+  .canvas-atmosphere{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 900px 520px at 50% -6%, rgba(201,173,167,.16), transparent 60%),
+      radial-gradient(ellipse 1100px 700px at 82% 8%, rgba(154,140,152,.07), transparent 65%),
+      var(--canvas);
+  }
+  .canvas-atmosphere::after{
+    content:'';
+    position:absolute; inset:0;
+    opacity:.05;
+    background-image: radial-gradient(rgba(242,233,228,.9) .7px, transparent .7px);
+    background-size:26px 26px;
+    background-position: 0 0;
+  }
+  main, header.nav, footer.foot{ position:relative; z-index:1; }
+
+  /* ============ NAV ============ */
+  .nav{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.9rem clamp(1.25rem,4vw,2.5rem);
+    background:rgba(19,19,34,.55);
+    backdrop-filter:blur(16px) saturate(140%);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);
+    border-bottom:1px solid transparent;
+    transition:background 200ms ease, border-color 200ms ease;
+  }
+  .nav.is-scrolled{
+    background:rgba(19,19,34,.82);
+    border-bottom-color:var(--border-soft);
+  }
+  .brand{ display:flex; align-items:center; gap:.5rem; font-weight:700; font-size:1.05rem; color:var(--text); }
+  .brand-dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--accent);
+    animation: voice-pulse 2.4s ease-out infinite;
+  }
+  .nav-links{ display:flex; align-items:center; gap:2rem; }
+  .nav-links a{ font-size:.88rem; font-weight:500; color:var(--text-2); transition:color 140ms ease; }
+  .nav-links a:hover{ color:var(--text); }
+  .nav-cta{ display:flex; align-items:center; gap:1.75rem; }
+  @media (max-width: 760px){ .nav-links{ display:none; } }
+
+  /* ============ BUTTONS ============ */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    padding:.85rem 1.6rem; border-radius:12px;
+    font:600 .88rem/1 var(--font-ui);
+    border:1px solid transparent;
+    transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    white-space:nowrap;
+  }
+  .btn-primary{ background:var(--accent); color:var(--note-ink); }
+  .btn-primary:hover{ background:#d7bfb9; transform:translateY(-1px); box-shadow:0 10px 30px rgba(201,173,167,.22); }
+  .btn-ghost{ background:transparent; color:var(--text-2); border-color:var(--border); }
+  .btn-ghost:hover{ background:var(--surface-1); color:var(--text); border-color:var(--border-strong); }
+  .btn-sm{ padding:.6rem 1.15rem; font-size:.8rem; border-radius:10px; }
+  .btn-block{ width:100%; }
+
+  /* ============ HERO ============ */
+  .hero{
+    min-height: calc(100vh - 4rem);
+    min-height: calc(100svh - 4rem);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:clamp(2rem,5vw,3.5rem) 0;
+  }
+  .hero-head{
+    max-width:760px; margin:0 auto; text-align:center;
+    padding-inline:clamp(1.25rem,4vw,2.5rem);
+  }
+  .hero-head .eyebrow{ display:flex; align-items:center; justify-content:center; gap:.6rem; }
+  .hero-head .eyebrow::before,
+  .hero-head .eyebrow::after{ content:''; width:16px; height:1px; background:var(--border); }
+  h1.hero-title{
+    font-size:clamp(2.5rem,5.4vw,4.3rem);
+    font-weight:700;
+    line-height:1.05;
+    color:var(--text);
+  }
+  h1.hero-title em{ font-style:normal; color:var(--accent); }
+  .hero-sub{
+    margin:1.4rem auto 0;
+    max-width:560px;
+    font-size:clamp(1.02rem,1.6vw,1.2rem);
+    line-height:1.6;
+    color:var(--text-2);
+    font-weight:400;
+  }
+  .hero-actions{
+    margin-top:2.1rem;
+    display:flex; align-items:center; justify-content:center; gap:1.1rem; flex-wrap:wrap;
+  }
+  .hero-price-note{
+    font-family:var(--font-mono);
+    font-size:.78rem;
+    color:var(--dim);
+  }
+  .hero-price-note b{ color:var(--muted); font-weight:600; }
+
+  .hero-intro{
+    opacity:0; transform:translateY(6px);
+    animation: settle-up 480ms cubic-bezier(.2,.8,.2,1) 80ms forwards;
+  }
+  .hero-stage-in{
+    opacity:0; transform:translateY(8px);
+    animation: settle-up 560ms cubic-bezier(.2,.8,.2,1) 220ms forwards;
+  }
+  @keyframes settle-up{ to{ opacity:1; transform:translateY(0); } }
+
+  /* ============ STAGE — pixel-faithful recreation of the Friday canvas ============ */
+  /* Reference frame: 980 x 680 (Friday's own minimum window size). Every measurement
+     below is copied straight from FRIDAY_DESIGN_SYSTEM.md and expressed as a multiple
+     of --u, a container-query unit equal to 1px at the 980-wide reference. Because the
+     frame's aspect-ratio is locked, one unit scales x and y identically, so the whole
+     app recreation stays pixel-proportional at any size — no separate mobile mock. */
+  .hero-stage{ padding:clamp(2rem,5vw,4rem) 0 clamp(3rem,6vw,5rem); }
+  .stage-wrap{ margin-top:0; }
+  .stage-viewport{
+    max-width:100%;
+    overflow-x:auto; overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    border-radius:22px;
+  }
+  .stage-viewport::-webkit-scrollbar{ display:none; }
+  .stage{
+    container-type: inline-size;
+    --u: calc(1cqw / 9.8); /* 980 units = 100cqw */
+    position:relative;
+    /* As wide as possible while still fitting the viewport height (aspect is
+       locked), so it can sit centered on screen. 760px floor keeps mobile panning. */
+    width:max(760px, min(1440px, 94vw, calc(82vh * 1.44)));
+    aspect-ratio:980/680;
+    margin-inline:auto;
+    border-radius:22px;
+    overflow:hidden;
+    background:var(--canvas);
+    border:1px solid var(--border-float);
+    box-shadow:var(--shadow-float);
+  }
+  .pan-hint{
+    display:none;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    color:var(--dim);
+    margin:.9rem 0 0;
+  }
+  @media (max-width: 1030px){ .pan-hint{ display:block; } }
+
+  .stage-bg{ position:absolute; inset:0; }
+  .stage-bg::before{
+    content:'';
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 640px 360px at 50% 2%, rgba(201,173,167,.20), transparent 62%),
+      radial-gradient(ellipse 520px 420px at 100% 100%, rgba(154,140,152,.08), transparent 60%),
+      var(--canvas);
+  }
+  .stage-bg::after{
+    content:'';
+    position:absolute; inset:0;
+    opacity:.05;
+    background-image: radial-gradient(rgba(242,233,228,.9) .7px, transparent .7px);
+    background-size:24px 24px;
+  }
+
+  /* -- canvas toolbar -- */
+  .mock-toolbar{
+    position:absolute;
+    left:calc(56 * var(--u));
+    top:calc(54 * var(--u));
+    display:flex; flex-direction:column;
+    gap:calc(7 * var(--u));
+    padding:calc(7 * var(--u));
+    border-radius:calc(15 * var(--u));
+    background:var(--surface-1);
+    border:1px solid var(--border-soft);
+    box-shadow:var(--shadow-float);
+  }
+  .mock-tool{
+    width:calc(36 * var(--u)); height:calc(36 * var(--u));
+    display:flex; align-items:center; justify-content:center;
+    border-radius:calc(10 * var(--u));
+    border:1px solid var(--border-soft);
+    color:var(--muted);
+  }
+  .mock-tool svg{ width:calc(17 * var(--u)); height:calc(17 * var(--u)); stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .mock-tool.is-active{ background:var(--accent-soft); border-color:var(--border-strong); color:var(--accent); }
+
+  /* -- workspace overview -- */
+  .mock-overview{
+    position:absolute;
+    right:calc(22 * var(--u));
+    top:calc(176 * var(--u));
+    width:calc(260 * var(--u));
+    padding:calc(12 * var(--u));
+    border-radius:calc(18 * var(--u));
+    background:var(--surface-1);
+    border:1px solid var(--border-float);
+    box-shadow:var(--shadow-float);
+  }
+  .overview-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:calc(10 * var(--u));
+    padding-inline:calc(4*var(--u));
+  }
+  .overview-head span:first-child{
+    font-size:calc(10.5*var(--u)); font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--dim);
+  }
+  .overview-count{ font-family:var(--font-mono); font-size:calc(11*var(--u)); color:var(--dim); }
+  .overview-card{
+    display:flex; align-items:center; gap:calc(10*var(--u));
+    min-height:calc(76*var(--u));
+    padding:calc(10*var(--u));
+    border-radius:calc(12*var(--u));
+    background:var(--surface-2);
+    margin-bottom:calc(10*var(--u));
+    transition:background 180ms ease;
+  }
+  .overview-card:last-child{ margin-bottom:0; }
+  .overview-card.is-active{ background:var(--accent-soft); }
+  .overview-thumb{
+    flex:none;
+    width:calc(74*var(--u)); height:calc(56*var(--u));
+    border-radius:calc(8*var(--u));
+    background:var(--surface-0);
+    display:flex; align-items:flex-end; gap:calc(4*var(--u));
+    padding:calc(6*var(--u));
+    overflow:hidden;
+  }
+  .overview-thumb i{ flex:1; border-radius:calc(2*var(--u)); background:var(--surface-3); display:block; transition:background 180ms ease, opacity 180ms ease; }
+  .overview-thumb i:nth-child(1){ height:70%; }
+  .overview-thumb i:nth-child(2){ height:100%; background:var(--surface-2); }
+  .overview-thumb i:nth-child(3){ height:45%; }
+  .overview-card.is-active .overview-thumb i{ background:var(--accent-2); opacity:.55; }
+  .overview-text{ display:flex; flex-direction:column; gap:calc(4*var(--u)); min-width:0; }
+  .overview-name{ font-size:calc(13*var(--u)); font-weight:650; color:var(--text); transition:color 180ms ease; }
+  .overview-card:not(.is-active) .overview-name{ color:var(--text-2); }
+  .overview-meta{ font-size:calc(11*var(--u)); color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* -- panes (terminal / browser) -- */
+  .mock-pane{
+    position:absolute;
+    border-radius:calc(16*var(--u));
+    background:var(--surface-1);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-float);
+    overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  .mock-pane.is-active{
+    border-color:var(--border-strong);
+    box-shadow:var(--shadow-float), inset 0 0 0 1px rgba(201,173,167,.22);
+  }
+  .pane-title{
+    flex:none;
+    height:calc(34*var(--u));
+    display:flex; align-items:center; justify-content:space-between;
+    padding-inline:calc(12*var(--u));
+    background:var(--surface-2);
+    border-bottom:1px solid var(--border-soft);
+  }
+  .pane-title span{ font-family:var(--font-mono); font-size:calc(11*var(--u)); font-weight:600; color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pane-close{ flex:none; width:calc(8*var(--u)); height:calc(8*var(--u)); border-radius:50%; background:var(--surface-3); }
+
+  /* -- pane slots — the canvas re-lays these out as agents pop in per scene -- */
+  .mock-scenes{ position:absolute; inset:0; }
+  /* When motion is allowed, start the hero blank so the intro can stage itself:
+     the goal types in, then the note appears, then the panes pop up. Reduced-motion
+     never gets .mock-anim, so the static scene stays fully visible. */
+  html.mock-anim .mock-scenes > .mock-pane{ opacity:0; }
+  html.mock-anim .mock-note{ opacity:0; }
+  html.mock-anim .composer-field .composer-text{ visibility:hidden; }
+  .pane-slot-1{ left:calc(130*var(--u)); top:calc(74*var(--u));  width:calc(250*var(--u)); height:calc(154*var(--u)); }
+  .pane-slot-2{ left:calc(410*var(--u)); top:calc(74*var(--u));  width:calc(250*var(--u)); height:calc(154*var(--u)); }
+  .pane-slot-3{ left:calc(270*var(--u)); top:calc(256*var(--u)); width:calc(250*var(--u)); height:calc(154*var(--u)); }
+
+  .term-body{
+    flex:1; background:var(--terminal); color:var(--terminal-text);
+    padding:calc(14*var(--u));
+    font-family:var(--font-mono); font-size:calc(12*var(--u)); line-height:calc(19*var(--u));
+    overflow:hidden;
+  }
+  .term-body p{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .term-dim{ color:rgba(226,219,229,.48); }
+  .term-prompt{ color:var(--accent); }
+  .term-success{ color:var(--success); }
+  .cursor{ display:inline-block; color:var(--accent); animation: cursor-blink 1s steps(1) infinite; }
+
+  .browser-row{
+    flex:none;
+    height:calc(34*var(--u));
+    display:flex; align-items:center; gap:calc(8*var(--u));
+    padding-inline:calc(12*var(--u));
+    background:var(--surface-1);
+  }
+  .url-label{ font-family:var(--font-mono); font-size:calc(10*var(--u)); color:var(--dim); flex:none; }
+  .url-pill{
+    flex:1; min-width:0;
+    height:calc(23*var(--u));
+    display:flex; align-items:center;
+    padding-inline:calc(9*var(--u));
+    border-radius:calc(8*var(--u));
+    background:var(--surface-0);
+    border:1px solid var(--border-soft);
+    font-family:var(--font-mono); font-size:calc(11*var(--u)); color:var(--text-2);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .browser-body{ flex:1; background:#0d1117; padding:calc(14*var(--u)); }
+  .b-bar{ width:calc(46*var(--u)); height:calc(6*var(--u)); border-radius:calc(3*var(--u)); background:var(--surface-3); margin-bottom:calc(16*var(--u)); }
+  .b-heading{ width:70%; height:calc(11*var(--u)); border-radius:calc(3*var(--u)); background:var(--surface-2); margin-bottom:calc(10*var(--u)); }
+  .b-line{ width:92%; height:calc(7*var(--u)); border-radius:calc(3*var(--u)); background:var(--surface-2); opacity:.7; margin-bottom:calc(7*var(--u)); }
+  .b-line.short{ width:56%; }
+
+  .browser-channels{ padding-block:calc(4*var(--u)); }
+  .channel-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-block:calc(7*var(--u));
+    border-bottom:1px solid var(--border-soft);
+    font-family:var(--font-mono); font-size:calc(12*var(--u));
+  }
+  .channel-row:last-child{ border-bottom:0; }
+  .channel-name{ color:var(--text-2); }
+  .channel-status{ font-weight:600; }
+  .channel-status.is-done{ color:var(--success); }
+  .channel-status.is-pending{ color:var(--dim); }
+
+  /* -- sticky note -- */
+  .mock-note{
+    position:absolute;
+    left:calc(110*var(--u)); top:calc(470*var(--u));
+    width:calc(220*var(--u));
+    padding:calc(17*var(--u));
+    border-radius:calc(13*var(--u));
+    background:var(--note);
+    color:var(--note-ink);
+    border:1px solid rgba(34,34,59,.26);
+    box-shadow:var(--shadow-note);
+    font-size:calc(14*var(--u));
+    font-weight:650;
+    line-height:1.36;
+    transform:rotate(-2deg);
+  }
+
+  /* -- bottom composer -- */
+  .mock-composer{
+    position:absolute;
+    left:50%;
+    bottom:calc(22*var(--u));
+    transform:translateX(-50%);
+    width:calc(640*var(--u));
+    display:grid;
+    grid-template-columns:calc(42*var(--u)) 1fr calc(128*var(--u)) calc(42*var(--u));
+    gap:calc(8*var(--u));
+    padding:calc(9*var(--u));
+    border-radius:calc(20*var(--u));
+    background:var(--surface-1);
+    border:1px solid var(--border-strong);
+    box-shadow:var(--shadow-float);
+  }
+  .mock-composer > *{
+    height:calc(44*var(--u));
+    border-radius:calc(14*var(--u));
+    display:flex; align-items:center; justify-content:center;
+  }
+  .composer-add, .composer-send{ background:var(--surface-2); color:var(--text-2); }
+  .composer-add svg, .composer-send svg{ width:calc(15*var(--u)); height:calc(15*var(--u)); stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; }
+  .composer-send{ font-family:var(--font-mono); font-size:calc(11*var(--u)); font-weight:600; }
+  .composer-field{
+    justify-content:flex-start;
+    padding-inline:calc(14*var(--u));
+    font-size:calc(13*var(--u));
+    font-weight:600;
+    color:var(--text-2);
+    overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+  }
+  .composer-field .composer-text{ min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .composer-caret{
+    flex:none;
+    width:calc(2*var(--u)); height:calc(17*var(--u));
+    margin-left:calc(2*var(--u));
+    border-radius:calc(1*var(--u));
+    background:var(--accent);
+    animation: cursor-blink 1s steps(1) infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .composer-caret{ animation:none; } }
+  .composer-hold{
+    gap:calc(7*var(--u));
+    background:var(--accent-soft);
+    color:var(--text-2);
+    font-family:var(--font-mono); font-size:calc(11*var(--u)); font-weight:600;
+  }
+  .composer-hold svg{ width:calc(13*var(--u)); height:calc(13*var(--u)); stroke:var(--accent); fill:none; stroke-width:1.7; stroke-linecap:round; }
+  .voice-dot{
+    width:calc(6*var(--u)); height:calc(6*var(--u)); border-radius:50%;
+    background:var(--accent);
+    animation: voice-pulse 2.4s ease-out infinite;
+  }
+
+  @keyframes cursor-blink{ 0%,49%{ opacity:1; } 50%,100%{ opacity:0; } }
+  @keyframes voice-pulse{
+    0%{ box-shadow:0 0 0 0 rgba(201,173,167,.55); }
+    70%{ box-shadow:0 0 0 9px rgba(201,173,167,0); }
+    100%{ box-shadow:0 0 0 0 rgba(201,173,167,0); }
+  }
+
+  /* ============ SECTIONS (shared marketing chrome) ============ */
+  section{ padding-block:clamp(4.5rem,8vw,7rem); }
+  .section-head{ max-width:600px; margin:0 auto 3rem; text-align:center; }
+  .section-head h2{ font-size:clamp(1.9rem,3.4vw,2.7rem); font-weight:700; color:var(--text); }
+  .section-head p{ margin-top:.9rem; font-size:1.05rem; color:var(--text-2); line-height:1.6; }
+
+  /* [data-reveal] is only pre-hidden once html.js-reveal proves JS ran (see head
+     script). Without it — JS disabled, blocked, or errored — content stays visible. */
+  html.js-reveal [data-reveal]{ opacity:0; transform:translateY(10px); transition:opacity 480ms cubic-bezier(.2,.8,.2,1), transform 480ms cubic-bezier(.2,.8,.2,1); }
+  html.js-reveal [data-reveal].is-revealed{ opacity:1; transform:translateY(0); }
+
+  /* -- features -- */
+  .feature-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
+  @media (max-width:900px){ .feature-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:600px){ .feature-grid{ grid-template-columns:1fr; } }
+  .feature-card{
+    padding:1.8rem;
+    background:var(--surface-1);
+    border:1px solid var(--border-soft);
+    border-radius:18px;
+    transition:transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+  .feature-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow-float); border-color:var(--border); }
+  .feature-icon{
+    width:42px; height:42px; border-radius:12px;
+    background:var(--surface-2);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:1.2rem;
+  }
+  .feature-icon svg{ width:20px; height:20px; stroke:var(--accent); fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .feature-card h3{ font-size:1.08rem; font-weight:650; color:var(--text); margin-bottom:.55rem; }
+  .feature-card p{ font-size:.92rem; line-height:1.6; color:var(--text-2); }
+
+  /* -- how it works -- */
+  .steps-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
+  @media (max-width:760px){ .steps-grid{ grid-template-columns:1fr; } }
+  .step-card{
+    padding:1.8rem;
+    background:var(--surface-1);
+    border:1px solid var(--border-soft);
+    border-radius:18px;
+  }
+  .step-num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:34px; height:34px;
+    border-radius:50%;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-family:var(--font-mono); font-weight:600; font-size:.95rem;
+    margin-bottom:1.1rem;
+  }
+  .step-card h3{ font-size:1.08rem; font-weight:650; color:var(--text); margin-bottom:.55rem; }
+  .step-card p{ font-size:.92rem; line-height:1.6; color:var(--text-2); }
+
+  /* -- works with -- */
+  .works-with{ text-align:center; }
+  .chip-row{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.65rem; }
+  .chip{
+    display:inline-flex; align-items:center; gap:.55rem;
+    padding:.65rem 1.15rem;
+    border-radius:999px;
+    background:var(--surface-1);
+    border:1px solid var(--border-soft);
+    font-family:var(--font-mono); font-size:.82rem; font-weight:500;
+    color:var(--text-2);
+    transition:background 140ms ease, color 140ms ease, border-color 140ms ease;
+  }
+  .chip:hover{ background:var(--hover); color:var(--text); border-color:var(--border); }
+  .chip i{ width:6px; height:6px; border-radius:50%; background:var(--accent-2); flex:none; }
+
+  /* -- pricing -- */
+  .pricing-card{
+    max-width:440px; margin:0 auto;
+    background:var(--surface-1);
+    border:1px solid var(--border-float);
+    border-radius:20px;
+    box-shadow:var(--shadow-float);
+    overflow:hidden;
+  }
+  .pricing-title-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    height:34px; padding-inline:14px;
+    background:var(--surface-0);
+    border-bottom:1px solid var(--border-soft);
+  }
+  .pricing-title-bar span{ font-family:var(--font-mono); font-size:.7rem; font-weight:600; color:var(--dim); }
+  .pricing-title-bar i{ width:7px; height:7px; border-radius:50%; background:var(--surface-3); }
+  .pricing-body{ padding:2.1rem 2rem 2rem; }
+  .pricing-body h3{ font-size:1.15rem; font-weight:650; color:var(--text); margin-bottom:1.1rem; }
+  .price-row{ display:flex; align-items:baseline; gap:.6rem; }
+  .price-row .amount{ font-size:3rem; font-weight:700; color:var(--text); letter-spacing:-.02em; }
+  .price-row .term{ font-family:var(--font-mono); font-size:.72rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  .pricing-divider{ height:1px; background:var(--border-soft); margin:1.5rem 0; }
+  .pricing-list{ display:flex; flex-direction:column; gap:.75rem; margin-bottom:1.8rem; }
+  .pricing-list li{ display:flex; align-items:flex-start; gap:.65rem; font-size:.92rem; color:var(--text-2); line-height:1.5; }
+  .pricing-list svg{ flex:none; width:16px; height:16px; margin-top:.15rem; stroke:var(--accent); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .pricing-micro{ text-align:center; margin-top:.9rem; font-size:.78rem; color:var(--dim); }
+
+  /* -- final cta -- */
+  .final-cta{ text-align:center; }
+  .final-cta h2{ font-size:clamp(2rem,4vw,3rem); font-weight:700; color:var(--text); }
+  .final-cta p{ margin:1rem auto 0; max-width:480px; font-size:1.05rem; color:var(--text-2); line-height:1.6; }
+  .final-cta .hero-actions{ margin-top:2.2rem; }
+
+  /* ============ FOOTER ============ */
+  .foot{ border-top:1px solid var(--border-soft); padding-block:3rem; }
+  .foot-top{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:2.5rem; }
+  .foot-brand p{ margin-top:.6rem; max-width:220px; font-size:.85rem; color:var(--dim); line-height:1.5; }
+  .foot-links{ display:flex; gap:3rem; flex-wrap:wrap; }
+  .foot-col h4{ font-size:.72rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin-bottom:.9rem; }
+  .foot-col a{ display:block; font-size:.88rem; color:var(--text-2); margin-bottom:.6rem; transition:color 140ms ease; }
+  .foot-col a:hover{ color:var(--text); }
+  .foot-bottom{
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem;
+    margin-top:2.5rem; padding-top:1.5rem;
+    border-top:1px solid var(--border-soft);
+    font-family:var(--font-mono); font-size:.75rem; color:var(--dim);
+  }
+
+  /* ============ REDUCED MOTION ============ */
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *, *::before, *::after{
+      animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas-atmosphere"></div>
+
+<header class="nav">
+  <a href="#top" class="brand">Friday<span class="brand-dot" aria-hidden="true"></span></a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How it works</a>
+    <a href="#pricing">Pricing</a>
+  </nav>
+  <div class="nav-cta">
+    <a href="#pricing" class="btn btn-primary btn-sm">Buy a license</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-head hero-intro">
+      <p class="eyebrow">AI agent harness</p>
+      <h1 class="hero-title">Set a goal.<br><em>Friday builds it.</em></h1>
+      <p class="hero-sub">Friday routes each task to the model that's best at it: Claude for design, Codex for code and review, OpenCode for cheap open models. Then it loops until the work is verified and done.</p>
+      <div class="hero-actions">
+        <a href="#pricing" class="btn btn-primary">Give Friday a goal</a>
+        <a href="#canvas" class="btn btn-ghost" data-center>See how it works</a>
+      </div>
+      <p class="hero-price-note"><b>Buy once</b> · bring your own keys · local-first</p>
+    </div>
+  </section>
+
+  <!-- ============ CANVAS (scroll down to reveal the live workspace) ============ -->
+  <section class="hero-stage" id="canvas">
+    <div class="stage-wrap hero-stage-in">
+      <div class="stage-viewport">
+        <!-- This recreates the real Friday app canvas at the exact positions and sizes
+             defined in FRIDAY_DESIGN_SYSTEM.md — the hero doesn't illustrate the product,
+             it IS the product. -->
+        <div class="stage" role="img" aria-label="Screenshot of the Friday app: a workspace overview, several agent terminal and browser panes at work, a sticky note, and a bottom composer with a goal typed in, all arranged on an infinite dark lavender canvas.">
+          <div class="stage-bg"></div>
+
+          <div class="mock-toolbar">
+            <button class="mock-tool is-active" aria-label="Terminal tool">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9.5 10 12l-3 2.5"/><line x1="13" y1="15" x2="17.5" y2="15"/></svg>
+            </button>
+            <button class="mock-tool" aria-label="Browser tool">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="7" y1="13" x2="15" y2="13"/><line x1="7" y1="16" x2="12" y2="16"/></svg>
+            </button>
+            <button class="mock-tool" aria-label="Note tool">
+              <svg viewBox="0 0 24 24"><path d="M6 3h9l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/></svg>
+            </button>
+          </div>
+
+          <div class="mock-overview">
+            <div class="overview-head">
+              <span>Workspaces</span>
+              <span class="overview-count">3</span>
+            </div>
+            <div class="overview-card is-active">
+              <div class="overview-thumb"><i></i><i></i><i></i></div>
+              <div class="overview-text">
+                <span class="overview-name">Research</span>
+                <span class="overview-meta">3 agents scanning</span>
+              </div>
+            </div>
+            <div class="overview-card">
+              <div class="overview-thumb"><i></i><i></i><i></i></div>
+              <div class="overview-text">
+                <span class="overview-name">Coding</span>
+                <span class="overview-meta">build + review</span>
+              </div>
+            </div>
+            <div class="overview-card">
+              <div class="overview-thumb"><i></i><i></i><i></i></div>
+              <div class="overview-text">
+                <span class="overview-name">Marketing</span>
+                <span class="overview-meta">automations live</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mock-scenes">
+            <div class="mock-pane pane-slot-1 is-active">
+              <div class="pane-title"><span>claude — brief</span><i class="pane-close"></i></div>
+              <div class="term-body">
+                <p><span class="term-prompt">→</span> reading 24 sources</p>
+                <p><span class="term-prompt">→</span> drafting the brief…</p>
+                <p class="term-success">✓ brief ready</p>
+                <p><span class="term-prompt">$</span> <span class="cursor">▍</span></p>
+              </div>
+            </div>
+            <div class="mock-pane pane-slot-2">
+              <div class="pane-title"><span>codex — data</span><i class="pane-close"></i></div>
+              <div class="term-body">
+                <p><span class="term-prompt">→</span> pulling market numbers</p>
+                <p><span class="term-prompt">→</span> charts generated</p>
+                <p class="term-success">✓ data in</p>
+                <p><span class="term-prompt">$</span> <span class="cursor">▍</span></p>
+              </div>
+            </div>
+            <div class="mock-pane pane-slot-3">
+              <div class="pane-title"><span>opencode — scan</span><i class="pane-close"></i></div>
+              <div class="term-body">
+                <p><span class="term-prompt">→</span> summarizing 400 pages</p>
+                <p><span class="term-prompt">→</span> cheap + fast</p>
+                <p class="term-success">✓ done</p>
+                <p><span class="term-prompt">$</span> <span class="cursor">▍</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mock-note">Brief needs sources. Sam will ask.</div>
+
+          <div class="mock-composer">
+            <button class="composer-add" aria-label="Add context">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <div class="composer-field"><span class="composer-text">Research the market and write a brief</span><span class="composer-caret" aria-hidden="true"></span></div>
+            <button class="composer-hold">
+              <span class="voice-dot" aria-hidden="true"></span>
+              <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              hold
+            </button>
+            <button class="composer-send">go</button>
+          </div>
+        </div>
+      </div>
+      <p class="pan-hint">← pan to explore the canvas →</p>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section id="how-it-works">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">How it works</p>
+        <h2>Three steps. Not three tools.</h2>
+        <p>Goal in. Finished thing out.</p>
+      </div>
+
+      <div class="steps-grid">
+        <article class="step-card" data-reveal>
+          <span class="step-num">1</span>
+          <h3>Set the goal</h3>
+          <p>A website, a marketing site, an app, a sales page. Say it in plain words.</p>
+        </article>
+        <article class="step-card" data-reveal>
+          <span class="step-num">2</span>
+          <h3>Friday picks the crew</h3>
+          <p>It routes each task to the best model and runs them together.</p>
+        </article>
+        <article class="step-card" data-reveal>
+          <span class="step-num">3</span>
+          <h3>It loops until done</h3>
+          <p>Build, verify, fix, repeat, until the goal is met the way you want it.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Features</p>
+        <h2>Everything the harness does</h2>
+        <p>Friday picks the agents, checks the work, and gets you to done.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.2"/><circle cx="19" cy="5" r="2.2"/><circle cx="19" cy="19" r="2.2"/><path d="M7.2 12h2.8M11 12l6-5.6M11 12l6 5.6"/></svg></div>
+          <h3>Right agent, every task</h3>
+          <p>Claude designs. Codex builds and reviews. OpenCode runs cheap open models. Friday chooses, so you don't.</p>
+        </article>
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M20 11A8 8 0 1 0 18.5 16.5"/><path d="M20 5v6h-6"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h3>Loops until verified</h3>
+          <p>Friday checks its own work and fixes what's broken, so you're never handed something half-done.</p>
+        </article>
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="4" x2="5" y2="20"/><circle cx="5" cy="9" r="2.2"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="12" cy="15" r="2.2"/><line x1="19" y1="4" x2="19" y2="20"/><circle cx="19" cy="7" r="2.2"/></svg></div>
+          <h3>Built to your taste</h3>
+          <p>Nudge it with a word. Friday keeps your style across the whole job.</p>
+        </article>
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="12" height="10" rx="2.5"/><rect x="9" y="4" width="12" height="10" rx="2.5"/></svg></div>
+          <h3>One goal, a whole crew</h3>
+          <p>Friday breaks the goal into tasks and runs agents in parallel.</p>
+        </article>
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M3 9V4h5"/><path d="M21 9V4h-5"/><path d="M3 15v5h5"/><path d="M21 15v5h-5"/></svg></div>
+          <h3>Watch it on a canvas</h3>
+          <p>Every agent, browser, and note on one surface. Jump in anytime.</p>
+        </article>
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+          <h3>Local-first, your keys</h3>
+          <p>Runs on your machine with your own API keys. Nothing gets proxied through us.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WORKS WITH ============ -->
+  <section id="works-with" class="works-with">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Works with</p>
+        <h2>Any CLI agent. Friday picks the right one.</h2>
+        <p>No lock-in.</p>
+      </div>
+      <div class="chip-row" data-reveal>
+        <span class="chip"><i></i>Claude Code</span>
+        <span class="chip"><i></i>Codex</span>
+        <span class="chip"><i></i>OpenCode</span>
+        <span class="chip"><i></i>Gemini CLI</span>
+        <span class="chip"><i></i>Cursor CLI</span>
+        <span class="chip"><i></i>Aider</span>
+        <span class="chip"><i></i>Amp</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRICING ============ -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Pricing</p>
+        <h2>One purchase. Yours forever.</h2>
+        <p>Every agent, every update, forever. Bring your own keys.</p>
+      </div>
+
+      <div class="pricing-card" data-reveal>
+        <div class="pricing-title-bar"><span>license — lifetime.json</span><i></i></div>
+        <div class="pricing-body">
+          <h3>Lifetime License</h3>
+          <div class="price-row"><span class="amount">$150</span><span class="term">once</span></div>
+          <div class="pricing-divider"></div>
+          <ul class="pricing-list">
+            <li><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Unlimited goals &amp; agents</li>
+            <li><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Auto-routing across models</li>
+            <li><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Self-verifying loop</li>
+            <li><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Every future update</li>
+            <li><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>macOS &amp; Windows (Linux soon)</li>
+            <li><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Local-first</li>
+          </ul>
+          <a href="#top" class="btn btn-primary btn-block">Buy a license</a>
+          <p class="pricing-micro">30-day refund · BYO API keys</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="final-cta">
+    <div class="wrap" data-reveal>
+      <h2>Give Friday a goal. Get a finished thing.</h2>
+      <p>$150 once. Every agent, every update. 30-day refund.</p>
+      <div class="hero-actions">
+        <a href="#pricing" class="btn btn-primary">Get Friday</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a href="#top" class="brand">Friday<span class="brand-dot" aria-hidden="true"></span></a>
+        <p>An AI agent harness. Set a goal and Friday builds it.</p>
+      </div>
+      <div class="foot-links">
+        <div class="foot-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#pricing">Pricing</a>
+        </div>
+        <div class="foot-col">
+          <h4>Company</h4>
+          <a href="mailto:hello@friday.dev">Contact</a>
+          <a href="#pricing">Buy a license</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Friday.</span>
+      <span>macOS & Windows today. Linux coming.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    // Nav gets a background once the page scrolls past the top.
+    var nav = document.querySelector('.nav');
+    var sentinel = document.createElement('div');
+    sentinel.style.position = 'absolute';
+    sentinel.style.top = '0';
+    sentinel.style.height = '1px';
+    document.body.prepend(sentinel);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function(entries){
+        nav.classList.toggle('is-scrolled', !entries[0].isIntersecting);
+      }).observe(sentinel);
+    }
+
+    // Quiet scroll-reveal for below-the-fold sections. Skips straight to the
+    // final state for reduced-motion users or if IntersectionObserver is missing.
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reveals = document.querySelectorAll('[data-reveal]');
+    if (reduced || !('IntersectionObserver' in window)) {
+      reveals.forEach(function(el){ el.classList.add('is-revealed'); });
+    } else {
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+      reveals.forEach(function(el){ io.observe(el); });
+    }
+
+    // Smooth-scroll [data-center] links (e.g. "See how it works") to their
+    // target, centered on screen — jumps straight to the live canvas.
+    document.querySelectorAll('a[data-center]').forEach(function(a){
+      a.addEventListener('click', function(e){
+        var target = document.querySelector(a.getAttribute('href'));
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior:'smooth', block:'center' }); }
+      });
+    });
+  })();
+</script>
+
+<script>
+  /* Loop the canvas mock through three workspaces so the hero shows Friday
+     actually at work: the goal is typed into the bottom composer, the
+     Workspaces panel switches to match, and a crew of agent panes pops up
+     on the canvas to do that workspace's job. Panes pop in staggered
+     (scale+fade), hold fully populated, then pop out before the next
+     workspace's crew arrives. Stays on the first (static) Research scene,
+     with no timers started, under reduced-motion. */
+  (function(){
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var field     = document.querySelector('.composer-field');
+    var fieldText = field && field.querySelector('.composer-text');
+    var cards     = document.querySelectorAll('.overview-card');
+    var stage     = document.querySelector('.mock-scenes');
+    var noteEl    = document.querySelector('.mock-note');
+    if (!field || !fieldText || !cards.length || !stage || !noteEl) return;
+
+    var P = function(t){ return '<p><span class="term-prompt">→</span> ' + t + '</p>'; };
+    var K = function(t){ return '<p class="term-success">✓ ' + t + '</p>'; };
+    var CURSOR = '<p><span class="term-prompt">$</span> <span class="cursor">▍</span></p>';
+
+    function terminalHTML(p){
+      return '<div class="pane-title"><span>' + p.title + '</span><i class="pane-close"></i></div>'
+           + '<div class="term-body">' + p.lines.join('') + CURSOR + '</div>';
+    }
+    function browserSkeletonHTML(p){
+      return '<div class="pane-title"><span>' + p.title + '</span><i class="pane-close"></i></div>'
+           + '<div class="browser-row"><span class="url-label">URL</span><span class="url-pill">' + p.url + '</span></div>'
+           + '<div class="browser-body"><div class="b-bar"></div><div class="b-heading"></div><div class="b-line"></div><div class="b-line short"></div></div>';
+    }
+    function browserChannelsHTML(p){
+      var rows = p.channels.map(function(c){
+        return '<div class="channel-row"><span class="channel-name">' + c.name + '</span><span class="channel-status ' + (c.done ? 'is-done' : 'is-pending') + '">' + c.status + '</span></div>';
+      }).join('');
+      return '<div class="pane-title"><span>' + p.title + '</span><i class="pane-close"></i></div>'
+           + '<div class="browser-row"><span class="url-label">URL</span><span class="url-pill">' + p.url + '</span></div>'
+           + '<div class="browser-body browser-channels">' + rows + '</div>';
+    }
+
+    // Reused canvas slots — a lead agent pane upper-left, a second upper-right,
+    // and a third (terminal or browser, depending on scene) staggered below —
+    // clear of the toolbar, the Workspaces panel, the sticky note, and the composer.
+    var scenes = [
+      { workspace:0, goal:"Research the market and write a brief", note:"Brief needs sources. Sam will ask.",
+        panes:[
+          { slot:1, active:true, l:130, t:74, w:250, h:154, type:'terminal', title:'claude — brief',
+            lines:[ P("reading 24 sources"), P("drafting the brief…"), K("brief ready") ] },
+          { slot:2, l:410, t:74, w:250, h:154, type:'terminal', title:'codex — data',
+            lines:[ P("pulling market numbers"), P("charts generated"), K("data in") ] },
+          { slot:3, l:270, t:256, w:250, h:154, type:'terminal', title:'opencode — scan',
+            lines:[ P("summarizing 400 pages"), P("cheap + fast"), K("done") ] }
+        ] },
+      { workspace:1, goal:"Build the feature and review the diff", note:"Ship before the demo. Recheck edge cases.",
+        panes:[
+          { slot:1, active:true, l:130, t:74, w:250, h:154, type:'terminal', title:'codex — build',
+            lines:[ P("building components"), P("tests… 48 pass"), K("green") ] },
+          { slot:2, l:410, t:74, w:250, h:154, type:'terminal', title:'claude — review',
+            lines:[ P("reviewing the diff"), P("2 nits, 0 blockers"), K("approved") ] },
+          { slot:3, l:264, t:256, w:262, h:178, type:'browser', title:'browser — localhost:3000', url:'localhost:3000' }
+        ] },
+      { workspace:2, goal:"Automate LinkedIn, X, email and SEO", note:"Post at 9am PT. A/B the hooks.",
+        panes:[
+          { slot:1, active:true, l:130, t:74, w:250, h:154, type:'terminal', title:'opencode — schedule',
+            lines:[ P("queuing 12 posts"), P("LinkedIn · X · email"), K("scheduled") ] },
+          { slot:2, l:410, t:74, w:250, h:154, type:'terminal', title:'claude — copy',
+            lines:[ P("writing the hooks"), P("5 variants each"), K("ready") ] },
+          { slot:3, l:264, t:256, w:262, h:194, type:'browser', title:'browser — campaigns', url:'friday.dev/campaigns',
+            channels:[
+              { name:'LinkedIn', status:'✓ queued', done:true },
+              { name:'X',        status:'✓ queued', done:true },
+              { name:'Email',    status:'✓ live',   done:true },
+              { name:'SEO',      status:'⟳ optimizing', done:false }
+            ] }
+        ] }
+    ];
+
+    function buildPane(p){
+      var el = document.createElement('div');
+      el.className = 'mock-pane' + (p.active ? ' is-active' : '');
+      el.style.left   = 'calc(' + p.l + ' * var(--u))';
+      el.style.top    = 'calc(' + p.t + ' * var(--u))';
+      el.style.width  = 'calc(' + p.w + ' * var(--u))';
+      el.style.height = 'calc(' + p.h + ' * var(--u))';
+      el.innerHTML = p.type === 'terminal' ? terminalHTML(p)
+                   : p.channels ? browserChannelsHTML(p)
+                   : browserSkeletonHTML(p);
+      return el;
+    }
+
+    function popOut(panes, done){
+      if (!panes.length){ done(); return; }
+      panes.forEach(function(p){
+        p.style.transition = 'opacity 180ms cubic-bezier(.2,.8,.2,1), transform 180ms cubic-bezier(.2,.8,.2,1)';
+        p.style.opacity = '0';
+        p.style.transform = 'translateY(calc(10 * var(--u))) scale(.96)';
+      });
+      setTimeout(done, 180);
+    }
+    function popIn(panes){
+      panes.forEach(function(p){
+        p.style.transition = 'none';
+        p.style.opacity = '0';
+        p.style.transform = 'translateY(calc(10 * var(--u))) scale(.96)';
+      });
+      void stage.offsetHeight; // flush the hidden state before animating in
+      panes.forEach(function(p, i){
+        setTimeout(function(){
+          p.style.transition = 'opacity 260ms cubic-bezier(.2,.8,.2,1), transform 260ms cubic-bezier(.2,.8,.2,1)';
+          p.style.opacity = '1';
+          p.style.transform = 'translateY(0) scale(1)';
+        }, i * 120);
+      });
+    }
+
+    function type(text, done){
+      var n = 0;
+      (function step(){
+        fieldText.textContent = text.slice(0, n);
+        if (n < text.length){ n++; setTimeout(step, 34); } else if (done) done();
+      })();
+    }
+    function erase(done){
+      (function step(){
+        var s = fieldText.textContent;
+        if (s.length){ fieldText.textContent = s.slice(0, -1); setTimeout(step, 16); } else if (done) done();
+      })();
+    }
+
+    var HOLD = 2800;      // rest time once a scene is fully populated
+    var NOTE_DELAY = 240; // after the goal is typed, before the note appears
+    var TERM_DELAY = 380; // after the note, before the agent panes pop up
+    var current = 0;
+
+    function showNote(text){
+      noteEl.textContent = text;
+      noteEl.style.transition = 'none';
+      noteEl.style.opacity = '0';
+      noteEl.style.transform = 'translateY(calc(10 * var(--u))) scale(.96) rotate(-2deg)';
+      void noteEl.offsetHeight;
+      noteEl.style.transition = 'opacity 260ms cubic-bezier(.2,.8,.2,1), transform 260ms cubic-bezier(.2,.8,.2,1)';
+      noteEl.style.opacity = '1';
+      noteEl.style.transform = 'rotate(-2deg)';
+    }
+    function hideNote(){
+      noteEl.style.transition = 'opacity 180ms cubic-bezier(.2,.8,.2,1), transform 180ms cubic-bezier(.2,.8,.2,1)';
+      noteEl.style.opacity = '0';
+      noteEl.style.transform = 'translateY(calc(10 * var(--u))) scale(.96) rotate(-2deg)';
+    }
+
+    // Staged reveal, one workspace at a time: (1) the goal types into the
+    // composer, then (2) the sticky note appears, then (3) the agent panes pop
+    // in and start working. Then it rests, clears the canvas, and moves on.
+    function playScene(next){
+      var scene = scenes[next];
+      current = next;
+      fieldText.style.visibility = 'visible';
+      erase(function(){
+        type(scene.goal, function(){                       // 1. goal typed in
+          cards.forEach(function(c, i){ c.classList.toggle('is-active', i === scene.workspace); });
+          setTimeout(function(){
+            showNote(scene.note);                          // 2. note shows up
+            setTimeout(function(){
+              var panes = scene.panes.map(buildPane);      // 3. terminals pop up
+              panes.forEach(function(p){ stage.appendChild(p); });
+              popIn(panes);
+              setTimeout(function(){
+                exitScene(function(){ playScene((next + 1) % scenes.length); });
+              }, HOLD);
+            }, TERM_DELAY);
+          }, NOTE_DELAY);
+        });
+      });
+    }
+
+    function exitScene(done){
+      var oldPanes = Array.prototype.slice.call(stage.children);
+      hideNote();
+      popOut(oldPanes, function(){
+        oldPanes.forEach(function(p){ p.remove(); });
+        done();
+      });
+    }
+
+    // Begin from a clean canvas; the staged sequence starts once the canvas
+    // scrolls into view, so the viewer catches the type -> note -> terminals intro.
+    Array.prototype.slice.call(stage.children).forEach(function(p){ p.remove(); });
+    fieldText.textContent = '';
+    if ('IntersectionObserver' in window) {
+      var started = false;
+      var startObs = new IntersectionObserver(function(entries){
+        if (entries[0].isIntersecting && !started) { started = true; startObs.disconnect(); playScene(0); }
+      }, { threshold: 0.3 });
+      startObs.observe(stage);
+    } else {
+      playScene(0);
+    }
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+# https://getfriday.dev/robots.txt
+# Friday welcomes search engines and AI agents/crawlers alike.
+
+User-agent: *
+Allow: /
+
+# --- AI crawlers & agent fetchers (explicitly welcomed) ---
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+Sitemap: https://getfriday.dev/sitemap-index.xml

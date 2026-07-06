@@ -1,0 +1,42 @@
+---
+import { waitlistUrl } from "../content";
+---
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a href="#top" class="brand">
+          <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="0" y="0" width="64" height="64" rx="14" fill="#1B1B2E"></rect>
+            <rect x="11" y="11" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+            <rect x="26" y="11" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+            <rect x="41" y="11" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+            <rect x="11" y="26" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+            <rect x="26" y="26" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+            <rect x="11" y="41" width="12" height="12" rx="3" fill="#C9ADA7"></rect>
+          </svg>
+          Friday
+        </a>
+        <p>An AI agent harness. Set a goal and Friday hires the crew.</p>
+      </div>
+      <div class="foot-links">
+        <div class="foot-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#pricing">Pricing</a>
+        </div>
+        <div class="foot-col">
+          <h4>Company</h4>
+          <a href="mailto:hello@friday.dev">Contact</a>
+          <a href={waitlistUrl} data-waitlist>Join the waitlist</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Friday.</span>
+      <span>macOS & Windows today. Linux coming.</span>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,56 @@
+---
+const site = "https://getfriday.dev";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${site}/#organization`,
+      name: "Friday",
+      url: `${site}/`,
+      logo: `${site}/icon-512.png`,
+      contactPoint: {
+        "@type": "ContactPoint",
+        email: "hello@friday.dev",
+        contactType: "customer support",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${site}/#website`,
+      url: `${site}/`,
+      name: "Friday",
+      publisher: { "@id": `${site}/#organization` },
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${site}/#software`,
+      name: "Friday",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "macOS, Windows",
+      description:
+        "AI agent harness. Give it a goal; it hires the best model for each task and loops until the work is verified and done. Runs on your own Claude and Codex subscriptions, local-first. Pre-launch: waitlist open, one-time payment, 50% off for the first 100 beta users.",
+      url: `${site}/`,
+      offers: {
+        "@type": "Offer",
+        url: `${site}/#pricing`,
+        availability: "https://schema.org/PreOrder",
+        description:
+          "One-time payment, lifetime license, no subscription. Price announced at beta launch; the first 100 beta users get 50% off.",
+      },
+      featureList: [
+        "Right agent every task",
+        "Loops until verified",
+        "Built to your taste",
+        "A workspace for every job",
+        "One infinite canvas",
+        "Your subscriptions, local-first",
+      ],
+      publisher: { "@id": `${site}/#organization` },
+    },
+  ],
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(structuredData)} />

@@ -1,0 +1,23 @@
+---
+import { tools } from "../content";
+---
+
+<section id="works-with" class="works-with">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <p class="eyebrow">Works with</p>
+      <h2>Any CLI agent can join the crew.</h2>
+      <p>New agent ships tomorrow? Friday puts it to work.</p>
+    </div>
+    <div class="chip-row" data-reveal>
+      {
+        tools.map((t) => (
+          <span class="chip">
+            <i></i>
+            {t}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</section>

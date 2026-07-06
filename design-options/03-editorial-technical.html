@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friday — Command a team of agents on one canvas</title>
+<meta name="description" content="Friday is a desktop AI agent harness: an infinite canvas for running Claude Code, Codex, Gemini CLI and more, side by side. One-time $150 lifetime license.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,340;0,9..144,440;0,9..144,560;0,9..144,600;1,9..144,440;1,9..144,500&family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Fragment+Mono&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper: #f4efe4;
+    --paper-dim: #ece5d4;
+    --ink: #17140f;
+    --ink-soft: #4a4438;
+    --ink-faint: #8a8271;
+    --rule: rgba(23,20,15,0.16);
+    --rule-strong: rgba(23,20,15,0.32);
+    --vermilion: #e0401c;
+    --vermilion-deep: #b52e10;
+    --vermilion-tint: rgba(224,64,28,0.10);
+    --paper-rgb: 244,239,228;
+
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'Fragment Mono', 'SF Mono', Menlo, monospace;
+
+    --container: 1360px;
+    --gutter: clamp(20px, 4vw, 56px);
+    --edge: clamp(20px, 5vw, 72px);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *, *::before, *::after{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+  }
+
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* paper grain */
+  body::before{
+    content:"";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  }
+
+  img, svg{ display:block; max-width:100%; }
+  a{ color:inherit; text-decoration:none; }
+  ul{ list-style:none; }
+
+  .wrap{
+    max-width: var(--container);
+    margin: 0 auto;
+    padding-left: var(--edge);
+    padding-right: var(--edge);
+    position: relative;
+  }
+
+  .rule{ border:none; border-top:1px solid var(--rule); }
+  .rule-strong{ border:none; border-top:1px solid var(--rule-strong); }
+
+  ::selection{ background: var(--ink); color: var(--paper); }
+
+  /* -------------------------------------------------- */
+  /* Reveal-on-scroll                                     */
+  /* -------------------------------------------------- */
+  .reveal{
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s cubic-bezier(.16,.8,.28,1), transform 0.7s cubic-bezier(.16,.8,.28,1);
+  }
+  .reveal.in{ opacity: 1; transform: translateY(0); }
+  .reveal-stagger.in > *{ transition-delay: calc(var(--i, 0) * 70ms); }
+
+  @media (prefers-reduced-motion: reduce){
+    .reveal{ opacity:1; transform:none; }
+  }
+
+  /* -------------------------------------------------- */
+  /* Scroll progress index rail                           */
+  /* -------------------------------------------------- */
+  .index-rail{
+    position: fixed;
+    right: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+  .index-rail a{
+    display:flex; align-items:center; gap:8px;
+    color: var(--ink-faint);
+    justify-content: flex-end;
+  }
+  .index-rail .num{
+    width: 18px; text-align:right;
+    transition: color .3s ease;
+  }
+  .index-rail .dot{
+    width:5px; height:5px; border-radius:50%;
+    background: var(--rule-strong);
+    transition: background .3s ease, transform .3s ease;
+  }
+  .index-rail a.active .num,
+  .index-rail a:hover .num{ color: var(--vermilion); }
+  .index-rail a.active .dot{ background: var(--vermilion); transform: scale(1.6); }
+  @media (max-width: 1100px){ .index-rail{ display:none; } }
+
+  /* -------------------------------------------------- */
+  /* Nav                                                  */
+  /* -------------------------------------------------- */
+  header.site{
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(var(--paper-rgb), 0.86);
+    backdrop-filter: blur(10px) saturate(1.1);
+    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    height: 68px;
+    gap: 24px;
+  }
+  .wordmark{
+    font-family: var(--serif);
+    font-weight: 560;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+    display:flex;
+    align-items:baseline;
+    gap: 8px;
+  }
+  .wordmark sup{
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    font-weight: 400;
+    color: var(--vermilion);
+    letter-spacing: 0.04em;
+    top: -0.9em;
+  }
+  nav.links{
+    display:flex;
+    align-items:center;
+    gap: clamp(18px, 2.4vw, 34px);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  nav.links a{
+    position: relative;
+    color: var(--ink-soft);
+    padding: 4px 0;
+  }
+  nav.links a::after{
+    content:"";
+    position:absolute; left:0; right:100%; bottom:0;
+    height:1px; background: var(--vermilion);
+    transition: right .3s cubic-bezier(.16,.8,.28,1);
+  }
+  nav.links a:hover{ color: var(--ink); }
+  nav.links a:hover::after{ right:0; }
+  nav.links a.mobile-hide{ }
+
+  .btn{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+    padding: 11px 18px;
+    border: 1px solid var(--ink);
+    white-space: nowrap;
+    transition: background .25s ease, color .25s ease, border-color .25s ease, transform .2s ease;
+  }
+  .btn-solid{
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-solid:hover{ background: var(--vermilion); border-color: var(--vermilion); transform: translateY(-1px); }
+  .btn-ghost:hover{ border-color: var(--vermilion); color: var(--vermilion); }
+  .btn svg{ width:12px; height:12px; }
+
+  @media (max-width: 780px){
+    nav.links{ display:none; }
+  }
+
+  /* -------------------------------------------------- */
+  /* Hero                                                 */
+  /* -------------------------------------------------- */
+  .hero{
+    position: relative;
+    padding-top: clamp(48px, 8vw, 84px);
+    padding-bottom: clamp(40px, 6vw, 64px);
+    overflow: hidden;
+  }
+  .hero-kicker{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: clamp(28px, 5vw, 52px);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .hero-kicker .pip{ color: var(--vermilion); }
+
+  .hero-grid{
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--gutter);
+    align-items: end;
+  }
+  .hero-head{
+    grid-column: 1 / span 9;
+  }
+  h1.display{
+    font-family: var(--serif);
+    font-optical-sizing: auto;
+    font-weight: 440;
+    font-size: clamp(3.1rem, 8.4vw, 8.4rem);
+    line-height: 0.94;
+    letter-spacing: -0.015em;
+  }
+  h1.display em{
+    font-style: italic;
+    font-weight: 500;
+    color: var(--vermilion);
+  }
+  h1.display .line{ display:block; overflow:hidden; }
+  h1.display .line span{ display:block; transform: translateY(110%); animation: rise .9s cubic-bezier(.16,.8,.28,1) forwards; }
+  h1.display .line:nth-child(1) span{ animation-delay: .05s; }
+  h1.display .line:nth-child(2) span{ animation-delay: .16s; }
+  h1.display .line:nth-child(3) span{ animation-delay: .27s; }
+  @keyframes rise{ to{ transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce){
+    h1.display .line span{ animation:none; transform:none; }
+  }
+
+  .hero-marginalia{
+    grid-column: 10 / span 3;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    padding-bottom: 6px;
+    border-left: 1px solid var(--rule-strong);
+    padding-left: 18px;
+  }
+  .hero-marginalia .fig{ color: var(--vermilion); display:block; margin-bottom: 6px; letter-spacing: 0.04em; }
+
+  .hero-sub-row{
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--gutter);
+    margin-top: clamp(30px, 5vw, 52px);
+  }
+  .hero-sub{
+    grid-column: 1 / span 6;
+    font-size: clamp(1.05rem, 1.6vw, 1.28rem);
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 46ch;
+  }
+  .hero-actions{
+    grid-column: 8 / span 5;
+    display:flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .hero-actions .row{ display:flex; gap: 12px; }
+  .hero-actions .note{
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.03em;
+    text-align: right;
+  }
+
+  @media (max-width: 900px){
+    .hero-head{ grid-column: 1 / -1; }
+    .hero-marginalia{ grid-column: 1 / -1; border-left:none; padding-left:0; margin-top: 22px; }
+    .hero-sub{ grid-column: 1 / -1; max-width: none; }
+    .hero-actions{ grid-column: 1 / -1; align-items: flex-start; margin-top: 20px; }
+    .hero-actions .note{ text-align:left; }
+  }
+
+  /* hero canvas figure */
+  .hero-figure{
+    margin-top: clamp(56px, 8vw, 96px);
+    position: relative;
+  }
+  .figure-frame{
+    border: 1px solid var(--rule-strong);
+    background: #fbf9f3;
+    position: relative;
+    aspect-ratio: 16/7.2;
+    overflow: hidden;
+  }
+  .figure-caption{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.03em;
+    padding-top: 12px;
+  }
+  .figure-caption strong{ color: var(--ink); font-weight: 500; }
+
+  .canvas-scene{
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 34px 34px;
+    background-position: -1px -1px;
+  }
+  .pane{
+    position: absolute;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    box-shadow: 6px 6px 0 rgba(23,20,15,0.08);
+  }
+  .pane .bar{
+    height: 22px;
+    border-bottom: 1px solid var(--rule-strong);
+    display:flex; align-items:center; gap:5px;
+    padding: 0 8px;
+  }
+  .pane .bar span{ width:5px; height:5px; border-radius:50%; background: var(--ink-faint); }
+  .pane .label{
+    position:absolute; bottom:6px; left:8px;
+    font-family: var(--mono); font-size: 9px; color: var(--ink-faint); letter-spacing:.03em;
+  }
+  .pane .lines{ padding: 10px 10px 0; }
+  .pane .lines i{ display:block; height:6px; background: var(--rule); margin-bottom:6px; border-radius:1px; }
+  .pane.p1{ top:8%; left:4%; width:30%; height:60%; }
+  .pane.p2{ top:20%; left:37%; width:26%; height:44%; }
+  .pane.p3{ top:52%; left:37%; width:26%; height:36%; }
+  .pane.p4{ top:12%; left:66%; width:29%; height:76%; }
+  .pane.accent{ border-color: var(--vermilion); }
+  .pane.accent .bar{ background: var(--vermilion-tint); }
+  .cursor-tag{
+    position:absolute; font-family: var(--mono); font-size: 9px;
+    background: var(--ink); color: var(--paper); padding: 3px 6px;
+    display:flex; align-items:center; gap:5px;
+  }
+  .cursor-tag::before{ content:""; width:6px; height:6px; background: var(--vermilion); }
+  .cursor-tag.c1{ top: 30%; left: 33%; }
+  .cursor-tag.c2{ top: 62%; left: 64%; }
+
+  /* -------------------------------------------------- */
+  /* Contents / Index strip                               */
+  /* -------------------------------------------------- */
+  .contents{
+    padding: clamp(30px,5vw,46px) 0;
+  }
+  .contents-grid{
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0;
+  }
+  .contents-item{
+    border-left: 1px solid var(--rule);
+    padding: 10px 16px 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    transition: color .25s ease, background .25s ease;
+  }
+  .contents-item:hover{ color: var(--vermilion); background: var(--vermilion-tint); }
+  .contents-item .n{ display:block; font-size:16px; color: var(--ink); margin-bottom: 4px; font-family: var(--serif); font-style: italic; }
+  .contents-item:hover .n{ color: var(--vermilion); }
+  @media (max-width: 900px){ .contents-grid{ grid-template-columns: repeat(3,1fr); } }
+  @media (max-width: 560px){ .contents-grid{ grid-template-columns: repeat(2,1fr); } }
+
+  /* -------------------------------------------------- */
+  /* Section shell                                        */
+  /* -------------------------------------------------- */
+  .section{ padding: clamp(64px, 9vw, 120px) 0; position: relative; }
+  .section-head{
+    display:grid;
+    grid-template-columns: repeat(12,1fr);
+    column-gap: var(--gutter);
+    margin-bottom: clamp(40px,6vw,70px);
+    align-items: end;
+  }
+  .section-eyebrow{
+    grid-column: 1/-1;
+    display:flex; align-items:center; gap: 12px;
+    font-family: var(--mono); font-size: 11px; letter-spacing:.08em; text-transform:uppercase; color: var(--vermilion);
+    margin-bottom: 18px;
+  }
+  .section-eyebrow::before{ content:""; width: 28px; height:1px; background: var(--vermilion); }
+  .section-title{
+    grid-column: 1 / span 7;
+    font-family: var(--serif);
+    font-weight: 440;
+    font-size: clamp(2.1rem, 4.4vw, 4rem);
+    line-height: 1.03;
+    letter-spacing: -0.01em;
+  }
+  .section-desc{
+    grid-column: 9 / span 4;
+    font-size: 1rem;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    padding-bottom: 4px;
+  }
+  @media (max-width: 900px){
+    .section-title, .section-desc{ grid-column: 1/-1; }
+    .section-desc{ margin-top: 16px; }
+  }
+
+  /* -------------------------------------------------- */
+  /* Features                                             */
+  /* -------------------------------------------------- */
+  .features-list{ border-top: 1px solid var(--rule-strong); }
+  .feature-row{
+    display:grid;
+    grid-template-columns: 90px 1fr 1fr;
+    column-gap: var(--gutter);
+    padding: clamp(26px,3.4vw,40px) 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+    transition: background .3s ease;
+  }
+  .feature-row:hover{ background: rgba(23,20,15,0.02); }
+  .feature-index{
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-faint);
+    padding-top: 6px;
+  }
+  .feature-name{
+    font-family: var(--serif);
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(1.5rem, 2.5vw, 2.1rem);
+    letter-spacing: -0.005em;
+    display:flex;
+    align-items:center;
+    gap: 14px;
+  }
+  .feature-name .mark{
+    width: 9px; height:9px;
+    background: var(--vermilion);
+    flex: none;
+    transform: rotate(45deg);
+    transition: transform .4s cubic-bezier(.16,.8,.28,1);
+  }
+  .feature-row:hover .feature-name .mark{ transform: rotate(225deg); }
+  .feature-copy{
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    line-height: 1.65;
+    max-width: 46ch;
+    padding-top: 8px;
+  }
+  .feature-copy .tag{
+    display:inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--vermilion-deep);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-top: 10px;
+    padding: 3px 8px;
+    border: 1px solid var(--vermilion);
+  }
+  @media (max-width: 760px){
+    .feature-row{ grid-template-columns: 1fr; row-gap: 10px; }
+    .feature-index{ padding-top:0; }
+  }
+
+  /* -------------------------------------------------- */
+  /* Works with                                          */
+  /* -------------------------------------------------- */
+  .works{
+    background: var(--ink);
+    color: var(--paper);
+    padding: clamp(56px,8vw,96px) 0;
+  }
+  .works .section-eyebrow{ color: var(--vermilion); }
+  .works .section-title{ color: var(--paper); }
+  .works-note{
+    grid-column: 9/span 4;
+    color: rgba(244,239,228,0.6);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .agent-marquee{
+    overflow: hidden;
+    border-top: 1px solid rgba(244,239,228,0.18);
+    border-bottom: 1px solid rgba(244,239,228,0.18);
+    padding: 26px 0;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .agent-track{
+    display:flex;
+    width: max-content;
+    gap: 0;
+    animation: scroll-left 34s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .agent-track{ animation: none; } }
+  .agent-track:hover{ animation-play-state: paused; }
+  @keyframes scroll-left{ from{ transform: translateX(0); } to{ transform: translateX(-50%); } }
+  .agent-item{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 440;
+    font-size: clamp(1.8rem, 3.2vw, 3rem);
+    color: rgba(244,239,228,0.86);
+    padding: 0 clamp(24px, 3vw, 48px);
+    white-space: nowrap;
+    display:flex; align-items:center; gap: clamp(24px,3vw,48px);
+  }
+  .agent-item::after{ content:"—"; font-family: var(--mono); font-style:normal; color: var(--vermilion); font-size: 1.2rem; }
+
+  .agent-grid{
+    margin-top: 40px;
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid rgba(244,239,228,0.14);
+    border-left: 1px solid rgba(244,239,228,0.14);
+  }
+  .agent-cell{
+    border-right: 1px solid rgba(244,239,228,0.14);
+    border-bottom: 1px solid rgba(244,239,228,0.14);
+    padding: 20px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .02em;
+    color: rgba(244,239,228,0.55);
+    display:flex; align-items:center; justify-content:space-between;
+    transition: color .25s ease, background .25s ease;
+  }
+  .agent-cell:hover{ color: var(--paper); background: rgba(244,239,228,0.04); }
+  .agent-cell span.dot{ width:5px; height:5px; border-radius:50%; background: var(--vermilion); opacity:.7; }
+  @media (max-width: 760px){ .agent-grid{ grid-template-columns: repeat(2,1fr); } }
+
+  /* -------------------------------------------------- */
+  /* Pricing                                              */
+  /* -------------------------------------------------- */
+  .pricing-grid{
+    display:grid;
+    grid-template-columns: 7fr 5fr;
+    gap: var(--gutter);
+    align-items: stretch;
+  }
+  .pricing-note{
+    padding-right: 20px;
+  }
+  .pricing-note .big-quote{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 440;
+    font-size: clamp(1.6rem, 2.6vw, 2.3rem);
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+  .pricing-note .big-quote .accent{ color: var(--vermilion); }
+  .pricing-note ul{ margin-top: 34px; display:flex; flex-direction:column; gap: 16px; }
+  .pricing-note li{
+    display:flex; gap: 12px; align-items:flex-start;
+    font-size: 0.98rem; color: var(--ink-soft);
+  }
+  .pricing-note li .ck{
+    font-family: var(--mono); color: var(--vermilion); flex: none; margin-top: 2px;
+  }
+
+  .price-card{
+    border: 1px solid var(--ink);
+    background: #fbf9f3;
+    padding: clamp(28px,3.5vw,44px);
+    position: relative;
+    display:flex; flex-direction:column;
+  }
+  .price-card::before{
+    content: "FIG. 05 — LICENSE";
+    position:absolute; top:-1px; left: -1px;
+    transform: translateY(-100%);
+    font-family: var(--mono); font-size: 10px; letter-spacing:.06em;
+    color: var(--ink-faint); padding-bottom: 8px;
+  }
+  .price-eyebrow{
+    font-family: var(--mono); font-size: 11px; text-transform:uppercase; letter-spacing:.06em;
+    color: var(--vermilion-deep); margin-bottom: 18px;
+    display:flex; justify-content: space-between;
+  }
+  .price-amount{
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(3.2rem, 5.5vw, 4.6rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    display:flex; align-items:flex-start; gap: 6px;
+  }
+  .price-amount sup{ font-family: var(--mono); font-size: 1.1rem; font-weight:400; margin-top: 10px; }
+  .price-amount small{ font-family: var(--sans); font-size: 0.95rem; font-weight:500; color: var(--ink-faint); align-self:flex-end; margin-bottom: 10px; text-transform: uppercase; letter-spacing: .02em;}
+  .price-sub{ font-size: 0.9rem; color: var(--ink-soft); margin-top: 10px; }
+
+  .price-list{ margin-top: 30px; display:flex; flex-direction: column; }
+  .price-list li{
+    display:flex; justify-content: space-between; gap: 10px;
+    padding: 12px 0;
+    border-top: 1px solid var(--rule);
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+  .price-list li span:last-child{ font-family: var(--mono); font-size: 11px; color: var(--ink); }
+
+  .price-card .btn{ margin-top: 30px; justify-content: center; width: 100%; padding: 15px; font-size: 13px; }
+  .price-fine{ margin-top: 14px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); text-align:center; letter-spacing:.02em; }
+
+  @media (max-width: 900px){ .pricing-grid{ grid-template-columns: 1fr; } .pricing-note{ order:2; padding-right:0; margin-top: 36px;} }
+
+  /* -------------------------------------------------- */
+  /* Final CTA                                            */
+  /* -------------------------------------------------- */
+  .final-cta{
+    padding: clamp(70px,10vw,140px) 0;
+    text-align: center;
+    position: relative;
+  }
+  .final-cta .kicker{
+    font-family: var(--mono); font-size: 11px; letter-spacing:.1em; text-transform:uppercase; color: var(--vermilion);
+    margin-bottom: 22px;
+  }
+  .final-cta h2{
+    font-family: var(--serif);
+    font-weight: 440;
+    font-size: clamp(2.4rem, 7vw, 6.4rem);
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    max-width: 16ch;
+    margin: 0 auto;
+  }
+  .final-cta h2 em{ font-style: italic; color: var(--vermilion); font-weight: 500; }
+  .final-cta .actions{ margin-top: 42px; display:flex; justify-content:center; gap: 14px; flex-wrap: wrap; }
+  .final-cta .btn{ padding: 16px 28px; font-size: 13px; }
+
+  /* -------------------------------------------------- */
+  /* Footer                                               */
+  /* -------------------------------------------------- */
+  footer.site{
+    border-top: 1px solid var(--rule-strong);
+    padding: clamp(40px,5vw,60px) 0 30px;
+  }
+  .footer-top{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: var(--gutter);
+    padding-bottom: 40px;
+  }
+  .footer-brand .wordmark{ margin-bottom: 14px; }
+  .footer-brand p{ color: var(--ink-soft); font-size: 0.9rem; max-width: 34ch; line-height: 1.6; }
+  .footer-col h4{
+    font-family: var(--mono); font-size: 10.5px; text-transform:uppercase; letter-spacing:.06em;
+    color: var(--ink-faint); margin-bottom: 16px;
+  }
+  .footer-col ul{ display:flex; flex-direction:column; gap: 10px; }
+  .footer-col a{ font-size: 0.92rem; color: var(--ink-soft); transition: color .2s ease; }
+  .footer-col a:hover{ color: var(--vermilion); }
+  .footer-bottom{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 12px;
+    padding-top: 24px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); letter-spacing: .02em;
+  }
+  @media (max-width: 760px){ .footer-top{ grid-template-columns: 1fr 1fr; row-gap: 30px; } }
+
+  /* Utility */
+  .num-tag{
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .06em;
+    color: var(--ink-faint);
+  }
+</style>
+</head>
+<body>
+
+<!-- scroll index rail -->
+<nav class="index-rail" aria-hidden="true">
+  <a href="#features" data-target="features"><span class="num">01</span><span class="dot"></span></a>
+  <a href="#works" data-target="works"><span class="num">02</span><span class="dot"></span></a>
+  <a href="#pricing" data-target="pricing"><span class="num">03</span><span class="dot"></span></a>
+  <a href="#faq" data-target="faq"><span class="num">04</span><span class="dot"></span></a>
+</nav>
+
+<header class="site">
+  <div class="wrap nav-inner">
+    <a href="#top" class="wordmark">Friday<sup>No. 01</sup></a>
+    <nav class="links">
+      <a href="#features">Features</a>
+      <a href="#works">Works&nbsp;With</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-solid" href="#pricing">
+      Buy a license
+      <svg viewBox="0 0 12 12" fill="none"><path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.3"/></svg>
+    </a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-kicker">
+        <span>Friday — Desktop Agent Harness</span>
+        <span class="pip">● macOS / Windows — Linux in progress</span>
+        <span>Est. 2026, Bengaluru</span>
+      </div>
+
+      <div class="hero-grid">
+        <h1 class="display hero-head">
+          <span class="line"><span>Stop juggling</span></span>
+          <span class="line"><span>terminal <em>tabs.</em></span></span>
+          <span class="line"><span>Command a canvas.</span></span>
+        </h1>
+        <div class="hero-marginalia reveal">
+          <span class="fig">Fig. 01</span>
+          One infinite canvas replaces the stack of terminal windows you currently alt-tab through. Pan, zoom, arrange — like a whiteboard for agents.
+        </div>
+      </div>
+
+      <div class="hero-sub-row">
+        <p class="hero-sub reveal">
+          Friday is a native desktop harness for running Claude Code, Codex, Gemini CLI and every other coding agent you use — in parallel, on one spatial canvas, with a real browser they can drive and memory that persists.
+        </p>
+        <div class="hero-actions reveal">
+          <div class="row">
+            <a href="#pricing" class="btn btn-solid">Get lifetime access — $150</a>
+            <a href="#features" class="btn btn-ghost">See the canvas</a>
+          </div>
+          <span class="note">Local-first · Bring your own API keys · No subscription</span>
+        </div>
+      </div>
+
+      <div class="hero-figure reveal">
+        <div class="figure-frame">
+          <div class="canvas-scene">
+            <div class="pane p1">
+              <div class="bar"><span></span><span></span><span></span></div>
+              <div class="lines"><i style="width:70%"></i><i style="width:40%"></i><i style="width:85%"></i><i style="width:55%"></i></div>
+              <div class="label">claude-code · session/api-refactor</div>
+            </div>
+            <div class="pane p2 accent">
+              <div class="bar"><span></span><span></span><span></span></div>
+              <div class="lines"><i style="width:60%"></i><i style="width:80%"></i></div>
+              <div class="label">codex · running…</div>
+            </div>
+            <div class="pane p3">
+              <div class="bar"><span></span><span></span><span></span></div>
+              <div class="lines"><i style="width:50%"></i><i style="width:65%"></i></div>
+              <div class="label">sticky note</div>
+            </div>
+            <div class="pane p4">
+              <div class="bar"><span></span><span></span><span></span></div>
+              <div class="lines"><i style="width:90%"></i><i style="width:70%"></i><i style="width:40%"></i><i style="width:60%"></i><i style="width:75%"></i></div>
+              <div class="label">browser · localhost:3000</div>
+            </div>
+            <div class="cursor-tag c1">gemini-cli</div>
+            <div class="cursor-tag c2">you</div>
+          </div>
+        </div>
+        <div class="figure-caption">
+          <span><strong>Fig. 01</strong> — Four panes, four agents, one canvas. Zoom out for the overview, zoom in to drive.</span>
+          <span>⌘K to command</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CONTENTS ============ -->
+  <section class="contents">
+    <hr class="rule-strong">
+    <div class="wrap">
+      <div class="contents-grid">
+        <a class="contents-item" href="#features"><span class="n">01</span>Features</a>
+        <a class="contents-item" href="#works"><span class="n">02</span>Works&nbsp;With</a>
+        <a class="contents-item" href="#pricing"><span class="n">03</span>Pricing</a>
+        <a class="contents-item" href="#faq"><span class="n">04</span>FAQ</a>
+        <a class="contents-item" href="#pricing"><span class="n">05</span>License</a>
+        <a class="contents-item" href="#top"><span class="n">06</span>Back&nbsp;to&nbsp;Top</a>
+      </div>
+    </div>
+    <hr class="rule">
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">Section 01 — The Workspace</span>
+        <h2 class="section-title">Built for people running <em style="font-style:italic;color:var(--vermilion)">more than one</em> agent at once.</h2>
+        <p class="section-desc">Six ideas, executed with restraint. No dashboards you have to learn — just a canvas, a command bar, and agents doing the work.</p>
+      </div>
+
+      <div class="features-list">
+        <div class="feature-row reveal">
+          <span class="feature-index">01 / 06</span>
+          <h3 class="feature-name"><span class="mark"></span>Infinite Canvas</h3>
+          <div class="feature-copy">
+            Pan and zoom across an unbounded workspace of terminal, browser and note panes — arranged spatially, not stacked into tabs you have to remember exist.
+            <span class="tag">Not a code editor</span>
+          </div>
+        </div>
+        <div class="feature-row reveal">
+          <span class="feature-index">02 / 06</span>
+          <h3 class="feature-name"><span class="mark"></span>Run Any Agent, in Parallel</h3>
+          <div class="feature-copy">
+            Claude Code, Codex, OpenCode, Gemini CLI, Cursor CLI, Aider, Amp — spin up as many as you need, side by side, each in its own pane.
+            <span class="tag">7 CLIs supported</span>
+          </div>
+        </div>
+        <div class="feature-row reveal">
+          <span class="feature-index">03 / 06</span>
+          <h3 class="feature-name"><span class="mark"></span>A Real Browser Pane</h3>
+          <div class="feature-copy">
+            A genuine browser lives on the canvas alongside your terminals — agents can navigate it, read it, and click through it themselves.
+            <span class="tag">Agent-drivable</span>
+          </div>
+        </div>
+        <div class="feature-row reveal">
+          <span class="feature-index">04 / 06</span>
+          <h3 class="feature-name"><span class="mark"></span>Persistent Project Memory</h3>
+          <div class="feature-copy">
+            Context survives the session. Close Friday, come back next week — your agents remember the project the way you left it.
+            <span class="tag">Across sessions</span>
+          </div>
+        </div>
+        <div class="feature-row reveal">
+          <span class="feature-index">05 / 06</span>
+          <h3 class="feature-name"><span class="mark"></span>Sticky Notes &amp; Whiteboard</h3>
+          <div class="feature-copy">
+            Leave yourself a note, sketch a plan, pin a reminder next to the pane it applies to. The canvas is yours as much as the agents'.
+            <span class="tag">Freeform</span>
+          </div>
+        </div>
+        <div class="feature-row reveal">
+          <span class="feature-index">06 / 06</span>
+          <h3 class="feature-name"><span class="mark"></span>Keyboard-First Command Bar</h3>
+          <div class="feature-copy">
+            <kbd style="font-family:var(--mono);border:1px solid var(--rule-strong);padding:1px 6px;border-radius:3px;font-size:0.85em;">⌘K</kbd> spawns an agent, jumps a pane, or runs a command — no mouse required, ever.
+            <span class="tag">⌘K everywhere</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WORKS WITH ============ -->
+  <section class="section works" id="works">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">Section 02 — Compatibility</span>
+        <h2 class="section-title">Bring the CLI you already trust.</h2>
+        <p class="works-note">Friday doesn't replace your agent — it gives every agent you run a home. Bring your own API keys; nothing routes through us.</p>
+      </div>
+    </div>
+
+    <div class="agent-marquee reveal">
+      <div class="agent-track" id="agentTrack">
+        <span class="agent-item">Claude Code</span>
+        <span class="agent-item">Codex</span>
+        <span class="agent-item">OpenCode</span>
+        <span class="agent-item">Gemini CLI</span>
+        <span class="agent-item">Cursor CLI</span>
+        <span class="agent-item">Aider</span>
+        <span class="agent-item">Amp</span>
+        <span class="agent-item">Claude Code</span>
+        <span class="agent-item">Codex</span>
+        <span class="agent-item">OpenCode</span>
+        <span class="agent-item">Gemini CLI</span>
+        <span class="agent-item">Cursor CLI</span>
+        <span class="agent-item">Aider</span>
+        <span class="agent-item">Amp</span>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="agent-grid reveal">
+        <div class="agent-cell">Claude Code <span class="dot"></span></div>
+        <div class="agent-cell">Codex <span class="dot"></span></div>
+        <div class="agent-cell">OpenCode <span class="dot"></span></div>
+        <div class="agent-cell">Gemini CLI <span class="dot"></span></div>
+        <div class="agent-cell">Cursor CLI <span class="dot"></span></div>
+        <div class="agent-cell">Aider <span class="dot"></span></div>
+        <div class="agent-cell">Amp <span class="dot"></span></div>
+        <div class="agent-cell">+ whatever's next <span class="dot"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRICING ============ -->
+  <section class="section" id="pricing">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">Section 03 — Pricing</span>
+        <h2 class="section-title">One price. <em style="font-style:italic;color:var(--vermilion)">No renewal.</em></h2>
+        <p class="section-desc">Software you buy the way software used to be sold — once, in full, and it's yours.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <div class="pricing-note reveal">
+          <p class="big-quote">We think a $19/month tax on a tool you already own is <span class="accent">absurd.</span> So Friday is sold once — pay $150, own the license forever, every future update included.</p>
+          <ul>
+            <li><span class="ck">→</span> No seat limits, no usage metering, no feature paywall</li>
+            <li><span class="ck">→</span> Runs fully local — your code and keys never touch our servers</li>
+            <li><span class="ck">→</span> Every major version upgrade ships free, permanently</li>
+            <li><span class="ck">→</span> 30-day no-questions refund if it's not for you</li>
+          </ul>
+        </div>
+
+        <div class="price-card reveal">
+          <div class="price-eyebrow"><span>Friday — Lifetime License</span><span>Fig. 05</span></div>
+          <div class="price-amount"><sup>$</sup>150<small>Once</small></div>
+          <p class="price-sub">One payment. macOS &amp; Windows today, Linux on the way — same license covers all platforms.</p>
+          <ul class="price-list">
+            <li><span>Agents supported</span><span>Unlimited</span></li>
+            <li><span>Canvas panes</span><span>Unlimited</span></li>
+            <li><span>Updates</span><span>Included, forever</span></li>
+            <li><span>Subscription</span><span>None</span></li>
+            <li><span>Refund window</span><span>30 days</span></li>
+          </ul>
+          <a href="#" class="btn btn-solid">Buy the license — $150</a>
+          <span class="price-fine">Instant download after purchase · No account required</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">Section 04 — Questions</span>
+        <h2 class="section-title">Before you ask.</h2>
+        <p class="section-desc">The four questions we get every week, answered plainly.</p>
+      </div>
+
+      <div class="features-list">
+        <div class="feature-row reveal" style="grid-template-columns: 90px 1fr;">
+          <span class="feature-index">Q1</span>
+          <div>
+            <h3 class="feature-name" style="font-size:1.25rem;margin-bottom:8px;"><span class="mark"></span>Is Friday a code editor?</h3>
+            <p class="feature-copy" style="max-width:70ch;">No. Friday is a harness — a canvas that hosts terminal panes running your existing CLI agents, plus a browser and notes. Keep using whatever editor you already use.</p>
+          </div>
+        </div>
+        <div class="feature-row reveal" style="grid-template-columns: 90px 1fr;">
+          <span class="feature-index">Q2</span>
+          <div>
+            <h3 class="feature-name" style="font-size:1.25rem;margin-bottom:8px;"><span class="mark"></span>Do I need my own API keys?</h3>
+            <p class="feature-copy" style="max-width:70ch;">Yes — Friday is bring-your-own-key by design. You already pay for Claude Code, Codex or Gemini CLI directly; Friday just orchestrates them, with nothing routed through our servers.</p>
+          </div>
+        </div>
+        <div class="feature-row reveal" style="grid-template-columns: 90px 1fr;">
+          <span class="feature-index">Q3</span>
+          <div>
+            <h3 class="feature-name" style="font-size:1.25rem;margin-bottom:8px;"><span class="mark"></span>What does "lifetime" actually cover?</h3>
+            <p class="feature-copy" style="max-width:70ch;">Every future update to Friday, on every platform we ship, for as long as the product exists — one license, purchased once, no renewal ever required.</p>
+          </div>
+        </div>
+        <div class="feature-row reveal" style="grid-template-columns: 90px 1fr;">
+          <span class="feature-index">Q4</span>
+          <div>
+            <h3 class="feature-name" style="font-size:1.25rem;margin-bottom:8px;"><span class="mark"></span>What about Linux?</h3>
+            <p class="feature-copy" style="max-width:70ch;">In active development. Buy today on macOS or Windows and the Linux build is included in your license at no extra cost when it ships.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="final-cta">
+    <div class="wrap">
+      <span class="kicker reveal">Fig. 06 — Get Started</span>
+      <h2 class="reveal">Your agents are waiting. <em>Give them a room.</em></h2>
+      <div class="actions reveal">
+        <a href="#pricing" class="btn btn-solid">Buy a license — $150</a>
+        <a href="#features" class="btn btn-ghost">Read the features</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#top" class="wordmark">Friday</a>
+        <p>A desktop harness for running AI coding agents in parallel, on one infinite canvas. Local-first, keyboard-first, yours forever.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#works">Works With</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#top">About</a></li>
+          <li><a href="#top">Changelog</a></li>
+          <li><a href="#top">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#top">Privacy</a></li>
+          <li><a href="#top">Terms</a></li>
+          <li><a href="#top">Refund Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="rule">
+    <div class="footer-bottom">
+      <span>© 2026 Friday. All rights reserved.</span>
+      <span>Vol. 01 — Issued from Bengaluru, India</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Staggered reveal-on-scroll
+  (function(){
+    var items = document.querySelectorAll('.reveal');
+    if(!('IntersectionObserver' in window)){
+      items.forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry, i){
+        if(entry.isIntersecting){
+          entry.target.style.transitionDelay = (i % 6) * 60 + 'ms';
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    items.forEach(function(el){ io.observe(el); });
+  })();
+
+  // Scroll-driven index rail
+  (function(){
+    var links = document.querySelectorAll('.index-rail a');
+    if(!links.length) return;
+    var sections = Array.prototype.map.call(links, function(a){
+      return document.getElementById(a.dataset.target);
+    });
+    function onScroll(){
+      var pos = window.scrollY + window.innerHeight * 0.4;
+      var activeIdx = 0;
+      sections.forEach(function(sec, i){
+        if(sec && sec.offsetTop <= pos) activeIdx = i;
+      });
+      links.forEach(function(a, i){ a.classList.toggle('active', i === activeIdx); });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

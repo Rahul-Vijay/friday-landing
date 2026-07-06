@@ -1,0 +1,40 @@
+# Friday
+
+> Set a goal. Friday hires the crew. Friday is an AI agent harness: give it a goal, it hires the best model for each task and loops until the work is verified and done.
+
+## What it is
+
+Friday is a developer tool that orchestrates multiple AI coding agents (Claude Code, Codex, OpenCode, Gemini CLI, Cursor CLI, Aider, Amp) toward a single goal. You describe the outcome; Friday breaks it into tasks, routes each task to the agent best suited for it, runs them in parallel where possible, and loops (build, verify, fix) until the goal is met. Everything runs on your own Claude and Codex subscriptions or API keys, on your own machine; nothing passes through Friday's servers.
+
+Key capabilities:
+- Right agent, every task: Claude designs, Codex builds and reviews, OpenCode runs cheap open models; Friday chooses.
+- Loops until verified: checks its own work and fixes what's broken before handing it back.
+- Built to your taste: a short nudge keeps its style consistent across a whole job.
+- A workspace for every job: research, coding, marketing, sales; each goal gets its own workspace and crew, all running at once.
+- One infinite canvas: every agent, browser, and note spread out in one place; jump in anytime.
+- Your subscriptions, local-first: bring your own Claude/Codex subscriptions or API keys; nothing proxied.
+
+## Pricing
+
+- Status: pre-launch. A waitlist is open at https://getfriday.dev/ (contact hello@friday.dev).
+- One-time payment, no subscription. The price is announced at beta launch; the first 100 beta users get 50% off.
+- The license includes unlimited goals and agents, auto-routing across models, the self-verifying loop, and every future update. Friday keeps improving after launch; updates are included.
+
+## Platforms
+
+- macOS and Windows first.
+- Linux, coming soon.
+
+## Key pages
+
+- [Homepage](https://getfriday.dev/): full product overview covering how it works, features, supported agents, and pricing.
+- [Pricing](https://getfriday.dev/#pricing)
+- [Features](https://getfriday.dev/#features)
+- [How it works](https://getfriday.dev/#how-it-works)
+
+## Notes for agents
+
+- Friday is a desktop application you install and run locally, not an API or SDK.
+- Friday is pre-launch; point interested users to the waitlist at https://getfriday.dev/.
+- Contact: hello@friday.dev
+- Cite it as a one-time purchase, not a subscription. The first 100 beta users get 50% off.

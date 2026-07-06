@@ -1,0 +1,389 @@
+---
+import { waitlistUrl } from "../content";
+---
+
+<section class="hero">
+  <div class="hero-head hero-intro">
+    <p class="eyebrow">AI agent harness</p>
+    <h1 class="hero-title">Set a goal.<br class="hero-title-br" /> <em>Friday hires the crew.</em></h1>
+    <p class="hero-sub">It splits your goal into tasks and hires the best agent for each one: Claude designs, Codex codes and reviews, OpenCode runs cheap and fast. Then it loops until the work is verified and done.</p>
+    <div class="hero-actions">
+      <a href={waitlistUrl} class="btn btn-primary" data-waitlist>Join the waitlist</a>
+      <a href="#canvas" class="btn btn-ghost" data-center>Watch it work</a>
+    </div>
+    <p class="hero-price-note"><b>Launching soon</b> · one payment, yours forever · bring your own subscriptions</p>
+  </div>
+  <div class="hero-bg" aria-hidden="true">
+    <video autoplay muted loop playsinline>
+      <source src="/hero-bg.mp4" type="video/mp4" />
+    </video>
+  </div>
+</section>
+
+<!-- ============ CANVAS (scroll down to reveal the live workspace) ============ -->
+<section class="hero-stage" id="canvas">
+  <div class="stage-wrap hero-stage-in">
+    <div class="stage-viewport">
+      <!-- This recreates the real Friday app canvas at the exact positions and sizes
+           defined in FRIDAY_DESIGN_SYSTEM.md — the hero doesn't illustrate the product,
+           it IS the product. -->
+      <div class="stage" role="img" aria-label="Screenshot of the Friday app: a workspace overview, several agent terminal and browser panes at work, a sticky note, and a bottom composer with a goal typed in, all arranged on an infinite dark lavender canvas.">
+        <div class="stage-bg"></div>
+
+        <div class="mock-toolbar">
+          <button class="mock-tool is-active" aria-label="Terminal tool">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M7 9.5 10 12l-3 2.5"></path><line x1="13" y1="15" x2="17.5" y2="15"></line></svg>
+          </button>
+          <button class="mock-tool" aria-label="Browser tool">
+            <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"></rect><line x1="3" y1="9.5" x2="21" y2="9.5"></line><line x1="7" y1="13" x2="15" y2="13"></line><line x1="7" y1="16" x2="12" y2="16"></line></svg>
+          </button>
+          <button class="mock-tool" aria-label="Note tool">
+            <svg viewBox="0 0 24 24"><path d="M6 3h9l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path><path d="M15 3v5h5"></path></svg>
+          </button>
+        </div>
+
+        <div class="mock-overview">
+          <div class="overview-head">
+            <span>Workspaces</span>
+            <span class="overview-count">3</span>
+          </div>
+          <div class="overview-card is-active">
+            <div class="overview-thumb"><i></i><i></i><i></i></div>
+            <div class="overview-text">
+              <span class="overview-name">Research</span>
+              <span class="overview-meta">3 agents scanning</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-thumb"><i></i><i></i><i></i></div>
+            <div class="overview-text">
+              <span class="overview-name">Coding</span>
+              <span class="overview-meta">build + review</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-thumb"><i></i><i></i><i></i></div>
+            <div class="overview-text">
+              <span class="overview-name">Marketing</span>
+              <span class="overview-meta">automations live</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mock-scenes">
+          <div class="mock-pane pane-slot-1 is-active">
+            <div class="pane-title"><span>claude — brief</span><i class="pane-close"></i></div>
+            <div class="term-body">
+              <p><span class="term-prompt">→</span> reading 24 sources</p>
+              <p><span class="term-prompt">→</span> drafting the brief…</p>
+              <p class="term-success">✓ brief ready</p>
+              <p><span class="term-prompt">$</span> <span class="cursor">▍</span></p>
+            </div>
+          </div>
+          <div class="mock-pane pane-slot-2">
+            <div class="pane-title"><span>codex — data</span><i class="pane-close"></i></div>
+            <div class="term-body">
+              <p><span class="term-prompt">→</span> pulling market numbers</p>
+              <p><span class="term-prompt">→</span> charts generated</p>
+              <p class="term-success">✓ data in</p>
+              <p><span class="term-prompt">$</span> <span class="cursor">▍</span></p>
+            </div>
+          </div>
+          <div class="mock-pane pane-slot-3">
+            <div class="pane-title"><span>opencode — scan</span><i class="pane-close"></i></div>
+            <div class="term-body">
+              <p><span class="term-prompt">→</span> summarizing 400 pages</p>
+              <p><span class="term-prompt">→</span> cheap + fast</p>
+              <p class="term-success">✓ done</p>
+              <p><span class="term-prompt">$</span> <span class="cursor">▍</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mock-note">Brief needs sources. Sam will ask.</div>
+
+        <div class="mock-composer">
+          <button class="composer-add" aria-label="Add context">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+          <div class="composer-field"><span class="composer-text">Research the market and write a brief</span><span class="composer-caret" aria-hidden="true"></span></div>
+          <button class="composer-hold">
+            <span class="voice-dot" aria-hidden="true"></span>
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="10" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0"></path><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            hold
+          </button>
+          <button class="composer-send">go</button>
+        </div>
+      </div>
+    </div>
+    <p class="pan-hint">← pan to explore the canvas →</p>
+  </div>
+</section>
+
+<script>
+  (function () {
+    // Nav gets a background once the page scrolls past the top.
+    var nav = document.querySelector('.nav');
+    var sentinel = document.createElement('div');
+    sentinel.style.position = 'absolute';
+    sentinel.style.top = '0';
+    sentinel.style.height = '1px';
+    document.body.prepend(sentinel);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        nav?.classList.toggle('is-scrolled', !entries[0].isIntersecting);
+      }).observe(sentinel);
+    }
+
+    // Quiet scroll-reveal for below-the-fold sections. Skips straight to the
+    // final state for reduced-motion users or if IntersectionObserver is missing.
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reveals = document.querySelectorAll('[data-reveal]');
+    if (reduced || !('IntersectionObserver' in window)) {
+      reveals.forEach(function (el) { el.classList.add('is-revealed'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+      reveals.forEach(function (el) { io.observe(el); });
+    }
+
+    // Smooth-scroll [data-center] links (e.g. "See how it works") to their
+    // target, centered on screen — jumps straight to the live canvas.
+    document.querySelectorAll('a[data-center]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var target = document.querySelector(a.getAttribute('href') as string);
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      });
+    });
+  })();
+</script>
+
+<script>
+  /* Loop the canvas mock through three workspaces so the hero shows Friday
+     actually at work: the goal is typed into the bottom composer, the
+     Workspaces panel switches to match, and a crew of agent panes pops up
+     on the canvas to do that workspace's job. Panes pop in staggered
+     (scale+fade), hold fully populated, then pop out before the next
+     workspace's crew arrives. Stays on the first (static) Research scene,
+     with no timers started, under reduced-motion. */
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var field = document.querySelector('.composer-field');
+    var fieldText = field && field.querySelector('.composer-text');
+    var cards = document.querySelectorAll('.overview-card');
+    var stage = document.querySelector('.mock-scenes');
+    var noteEl = document.querySelector('.mock-note');
+    if (!field || !fieldText || !cards.length || !stage || !noteEl) return;
+
+    var P = function (t: string) { return '<p><span class="term-prompt">→</span> ' + t + '</p>'; };
+    var K = function (t: string) { return '<p class="term-success">✓ ' + t + '</p>'; };
+    var CURSOR = '<p><span class="term-prompt">$</span> <span class="cursor">▍</span></p>';
+
+    function terminalHTML(p: any) {
+      return '<div class="pane-title"><span>' + p.title + '</span><i class="pane-close"></i></div>'
+        + '<div class="term-body">' + p.lines.join('') + CURSOR + '</div>';
+    }
+    function browserSkeletonHTML(p: any) {
+      return '<div class="pane-title"><span>' + p.title + '</span><i class="pane-close"></i></div>'
+        + '<div class="browser-row"><span class="url-label">URL</span><span class="url-pill">' + p.url + '</span></div>'
+        + '<div class="browser-body"><div class="b-bar"></div><div class="b-heading"></div><div class="b-line"></div><div class="b-line short"></div></div>';
+    }
+    function browserChannelsHTML(p: any) {
+      var rows = p.channels.map(function (c: any) {
+        return '<div class="channel-row"><span class="channel-name">' + c.name + '</span><span class="channel-status ' + (c.done ? 'is-done' : 'is-pending') + '">' + c.status + '</span></div>';
+      }).join('');
+      return '<div class="pane-title"><span>' + p.title + '</span><i class="pane-close"></i></div>'
+        + '<div class="browser-row"><span class="url-label">URL</span><span class="url-pill">' + p.url + '</span></div>'
+        + '<div class="browser-body browser-channels">' + rows + '</div>';
+    }
+
+    // Reused canvas slots — a lead agent pane upper-left, a second upper-right,
+    // and a third (terminal or browser, depending on scene) staggered below —
+    // clear of the toolbar, the Workspaces panel, the sticky note, and the composer.
+    var scenes = [
+      {
+        workspace: 0, goal: "Research the market and write a brief", note: "Brief needs sources. Sam will ask.",
+        panes: [
+          {
+            slot: 1, active: true, l: 130, t: 74, w: 250, h: 154, type: 'terminal', title: 'claude — brief',
+            lines: [P("reading 24 sources"), P("drafting the brief…"), K("brief ready")]
+          },
+          {
+            slot: 2, l: 410, t: 74, w: 250, h: 154, type: 'terminal', title: 'codex — data',
+            lines: [P("pulling market numbers"), P("charts generated"), K("data in")]
+          },
+          {
+            slot: 3, l: 270, t: 256, w: 250, h: 154, type: 'terminal', title: 'opencode — scan',
+            lines: [P("summarizing 400 pages"), P("cheap + fast"), K("done")]
+          }
+        ]
+      },
+      {
+        workspace: 1, goal: "Build the feature and review the diff", note: "Ship before the demo. Recheck edge cases.",
+        panes: [
+          {
+            slot: 1, active: true, l: 130, t: 74, w: 250, h: 154, type: 'terminal', title: 'codex — build',
+            lines: [P("building components"), P("tests… 48 pass"), K("green")]
+          },
+          {
+            slot: 2, l: 410, t: 74, w: 250, h: 154, type: 'terminal', title: 'claude — review',
+            lines: [P("reviewing the diff"), P("2 nits, 0 blockers"), K("approved")]
+          },
+          { slot: 3, l: 264, t: 256, w: 262, h: 178, type: 'browser', title: 'browser — localhost:3000', url: 'localhost:3000' }
+        ]
+      },
+      {
+        workspace: 2, goal: "Automate LinkedIn, X, email and SEO", note: "Post at 9am PT. A/B the hooks.",
+        panes: [
+          {
+            slot: 1, active: true, l: 130, t: 74, w: 250, h: 154, type: 'terminal', title: 'opencode — schedule',
+            lines: [P("queuing 12 posts"), P("LinkedIn · X · email"), K("scheduled")]
+          },
+          {
+            slot: 2, l: 410, t: 74, w: 250, h: 154, type: 'terminal', title: 'claude — copy',
+            lines: [P("writing the hooks"), P("5 variants each"), K("ready")]
+          },
+          {
+            slot: 3, l: 264, t: 256, w: 262, h: 194, type: 'browser', title: 'browser — campaigns', url: 'friday.dev/campaigns',
+            channels: [
+              { name: 'LinkedIn', status: '✓ queued', done: true },
+              { name: 'X', status: '✓ queued', done: true },
+              { name: 'Email', status: '✓ live', done: true },
+              { name: 'SEO', status: '⟳ optimizing', done: false }
+            ]
+          }
+        ]
+      }
+    ];
+
+    function buildPane(p: any) {
+      var el = document.createElement('div');
+      el.className = 'mock-pane' + (p.active ? ' is-active' : '');
+      el.style.left = 'calc(' + p.l + ' * var(--u))';
+      el.style.top = 'calc(' + p.t + ' * var(--u))';
+      el.style.width = 'calc(' + p.w + ' * var(--u))';
+      el.style.height = 'calc(' + p.h + ' * var(--u))';
+      el.innerHTML = p.type === 'terminal' ? terminalHTML(p)
+        : p.channels ? browserChannelsHTML(p)
+        : browserSkeletonHTML(p);
+      return el;
+    }
+
+    function popOut(panes: HTMLElement[], done: () => void) {
+      if (!panes.length) { done(); return; }
+      panes.forEach(function (p) {
+        p.style.transition = 'opacity 180ms cubic-bezier(.2,.8,.2,1), transform 180ms cubic-bezier(.2,.8,.2,1)';
+        p.style.opacity = '0';
+        p.style.transform = 'translateY(calc(10 * var(--u))) scale(.96)';
+      });
+      setTimeout(done, 180);
+    }
+    function popIn(panes: HTMLElement[]) {
+      panes.forEach(function (p) {
+        p.style.transition = 'none';
+        p.style.opacity = '0';
+        p.style.transform = 'translateY(calc(10 * var(--u))) scale(.96)';
+      });
+      void (stage as HTMLElement).offsetHeight; // flush the hidden state before animating in
+      panes.forEach(function (p, i) {
+        setTimeout(function () {
+          p.style.transition = 'opacity 260ms cubic-bezier(.2,.8,.2,1), transform 260ms cubic-bezier(.2,.8,.2,1)';
+          p.style.opacity = '1';
+          p.style.transform = 'translateY(0) scale(1)';
+        }, i * 120);
+      });
+    }
+
+    function type(text: string, done?: () => void) {
+      var n = 0;
+      (function step() {
+        (fieldText as Element).textContent = text.slice(0, n);
+        if (n < text.length) { n++; setTimeout(step, 34); } else if (done) done();
+      })();
+    }
+    function erase(done?: () => void) {
+      (function step() {
+        var s = (fieldText as Element).textContent || '';
+        if (s.length) { (fieldText as Element).textContent = s.slice(0, -1); setTimeout(step, 16); } else if (done) done();
+      })();
+    }
+
+    var HOLD = 2800;      // rest time once a scene is fully populated
+    var NOTE_DELAY = 240; // after the goal is typed, before the note appears
+    var TERM_DELAY = 380; // after the note, before the agent panes pop up
+    var current = 0;
+
+    function showNote(text: string) {
+      var note = noteEl as HTMLElement;
+      note.textContent = text;
+      note.style.transition = 'none';
+      note.style.opacity = '0';
+      note.style.transform = 'translateY(calc(10 * var(--u))) scale(.96) rotate(-2deg)';
+      void note.offsetHeight;
+      note.style.transition = 'opacity 260ms cubic-bezier(.2,.8,.2,1), transform 260ms cubic-bezier(.2,.8,.2,1)';
+      note.style.opacity = '1';
+      note.style.transform = 'rotate(-2deg)';
+    }
+    function hideNote() {
+      var note = noteEl as HTMLElement;
+      note.style.transition = 'opacity 180ms cubic-bezier(.2,.8,.2,1), transform 180ms cubic-bezier(.2,.8,.2,1)';
+      note.style.opacity = '0';
+      note.style.transform = 'translateY(calc(10 * var(--u))) scale(.96) rotate(-2deg)';
+    }
+
+    // Staged reveal, one workspace at a time: (1) the goal types into the
+    // composer, then (2) the sticky note appears, then (3) the agent panes pop
+    // in and start working. Then it rests, clears the canvas, and moves on.
+    function playScene(next: number) {
+      var scene = scenes[next];
+      current = next;
+      (fieldText as HTMLElement).style.visibility = 'visible';
+      erase(function () {
+        type(scene.goal, function () {                       // 1. goal typed in
+          cards.forEach(function (c, i) { c.classList.toggle('is-active', i === scene.workspace); });
+          setTimeout(function () {
+            showNote(scene.note);                          // 2. note shows up
+            setTimeout(function () {
+              var panes = scene.panes.map(buildPane);      // 3. terminals pop up
+              panes.forEach(function (p) { (stage as HTMLElement).appendChild(p); });
+              popIn(panes);
+              setTimeout(function () {
+                exitScene(function () { playScene((next + 1) % scenes.length); });
+              }, HOLD);
+            }, TERM_DELAY);
+          }, NOTE_DELAY);
+        });
+      });
+    }
+
+    function exitScene(done: () => void) {
+      var oldPanes = Array.prototype.slice.call((stage as HTMLElement).children) as HTMLElement[];
+      hideNote();
+      popOut(oldPanes, function () {
+        oldPanes.forEach(function (p) { p.remove(); });
+        done();
+      });
+    }
+
+    // Begin from a clean canvas; the staged sequence starts once the canvas
+    // scrolls into view, so the viewer catches the type -> note -> terminals intro.
+    Array.prototype.slice.call((stage as HTMLElement).children).forEach(function (p: any) { p.remove(); });
+    (fieldText as HTMLElement).textContent = '';
+    if ('IntersectionObserver' in window) {
+      var started = false;
+      var startObs = new IntersectionObserver(function (entries) {
+        if (entries[0].isIntersecting && !started) { started = true; startObs.disconnect(); playScene(0); }
+      }, { threshold: 0.3 });
+      startObs.observe(stage as HTMLElement);
+    } else {
+      playScene(0);
+    }
+  })();
+</script>

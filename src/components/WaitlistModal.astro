@@ -1,0 +1,185 @@
+---
+import { waitlistEndpoint, waitlistUrl } from "../content";
+---
+
+<div
+  class="wl-overlay"
+  id="waitlist-modal"
+  data-endpoint={waitlistEndpoint}
+  data-mailto={waitlistUrl}
+  aria-hidden="true"
+>
+  <div class="wl-dialog" role="dialog" aria-modal="true" aria-labelledby="wl-heading">
+    <div class="pricing-title-bar wl-title-bar">
+      <span>friday — waitlist</span>
+      <button class="wl-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+    </div>
+    <div class="wl-body">
+      <div class="wl-view-form">
+        <h3 id="wl-heading">Join the waitlist</h3>
+        <p class="wl-sub">Invites go out in waitlist order. The first 100 beta users get half off.</p>
+        <form class="wl-form" novalidate>
+          <input
+            class="wl-input"
+            type="email"
+            name="email"
+            placeholder="you@yourcompany.com"
+            autocomplete="email"
+            required
+            aria-label="Email address"
+          />
+          <input type="text" name="_gotcha" class="wl-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <button class="btn btn-primary btn-block" type="submit">Get my invite</button>
+        </form>
+        <p class="wl-error" hidden>That email doesn't look right. Mind checking it?</p>
+        <p class="wl-micro">One email when your invite is ready. Nothing else.</p>
+      </div>
+      <div class="wl-view-success" hidden>
+        <span class="wl-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5" /></svg>
+        </span>
+        <h3 class="wl-success-title">You're on the list.</h3>
+        <p class="wl-sub wl-success-sub">Watch your inbox. Invites go out in waitlist order, and the first 100 get half off.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById("waitlist-modal");
+  if (modal) {
+    const endpoint = modal.dataset.endpoint || "";
+    const mailto = modal.dataset.mailto || "";
+    const form = modal.querySelector(".wl-form");
+    const emailInput = form.querySelector('input[type="email"]');
+    const honeypot = form.querySelector('input[name="_gotcha"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const errorEl = modal.querySelector(".wl-error");
+    const formView = modal.querySelector(".wl-view-form");
+    const successView = modal.querySelector(".wl-view-success");
+    const successTitle = modal.querySelector(".wl-success-title");
+    const successSub = modal.querySelector(".wl-success-sub");
+    const closeBtn = modal.querySelector(".wl-close");
+    let lastFocus = null;
+
+    // Country is looked up once, when the modal first opens, so the submit
+    // itself never waits on it. Empty string if the lookup fails or hasn't
+    // resolved yet; timezone and locale below fill the gap.
+    let country = "";
+    let geoRequested = false;
+    const prefetchCountry = () => {
+      if (geoRequested) return;
+      geoRequested = true;
+      fetch("https://api.country.is/")
+        .then((r) => r.json())
+        .then((d) => {
+          country = String(d.country || "");
+        })
+        .catch(() => {});
+    };
+
+    const open = () => {
+      lastFocus = document.activeElement;
+      prefetchCountry();
+      formView.hidden = false;
+      successView.hidden = true;
+      errorEl.hidden = true;
+      modal.classList.add("is-open");
+      modal.removeAttribute("aria-hidden");
+      document.body.style.overflow = "hidden";
+      setTimeout(() => emailInput.focus(), 150);
+    };
+    const close = () => {
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      if (lastFocus) lastFocus.focus();
+    };
+
+    document.querySelectorAll("a[data-waitlist]").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        open();
+      });
+    });
+    closeBtn.addEventListener("click", close);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) close();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("is-open")) close();
+    });
+
+    const mailtoWith = (email) =>
+      `${mailto}&body=${encodeURIComponent(`Please add me to the Friday waitlist: ${email}`)}`;
+
+    const showSuccess = (viaMailto) => {
+      if (viaMailto) {
+        successTitle.textContent = "One more tap.";
+        successSub.textContent =
+          "Your email app just opened with a prefilled note. Hit send and you're on the list.";
+      }
+      formView.hidden = true;
+      successView.hidden = false;
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (honeypot.value) {
+        showSuccess(false);
+        return;
+      }
+      const email = emailInput.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errorEl.hidden = false;
+        emailInput.focus();
+        return;
+      }
+      errorEl.hidden = true;
+
+      if (!endpoint) {
+        window.location.href = mailtoWith(email);
+        showSuccess(true);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Adding you…";
+      try {
+        let timezone = "";
+        try {
+          timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+        } catch (tzErr) {}
+        const payload = JSON.stringify({
+          email,
+          country,
+          timezone,
+          locale: navigator.language || "",
+        });
+        // Google Apps Script can't answer a CORS preflight, so it gets a
+        // "simple" no-cors POST (opaque response, assumed OK if it sends).
+        const isAppsScript = endpoint.includes("script.google.com");
+        const res = await fetch(
+          endpoint,
+          isAppsScript
+            ? { method: "POST", mode: "no-cors", body: payload }
+            : {
+                method: "POST",
+                headers: { Accept: "application/json", "Content-Type": "application/json" },
+                body: payload,
+              }
+        );
+        if (!isAppsScript && !res.ok) throw new Error(`status ${res.status}`);
+        showSuccess(false);
+      } catch (err) {
+        window.location.href = mailtoWith(email);
+        showSuccess(true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Get my invite";
+      }
+    });
+  }
+</script>

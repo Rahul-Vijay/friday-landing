@@ -1,0 +1,25 @@
+---
+import { steps } from "../content";
+---
+
+<section id="how-it-works">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <p class="eyebrow">How it works</p>
+      <h2>Three steps. Not three tools.</h2>
+      <p>Goal in. Finished thing out.</p>
+    </div>
+
+    <div class="steps-grid">
+      {
+        steps.map((s) => (
+          <article class="step-card" data-reveal>
+            <span class="step-num">{s.num}</span>
+            <h3>{s.title}</h3>
+            <p>{s.body}</p>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>

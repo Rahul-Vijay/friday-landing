@@ -1,0 +1,26 @@
+---
+import { waitlistUrl } from "../content";
+---
+
+<header class="nav">
+  <a href="#top" class="brand">
+    <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="0" y="0" width="64" height="64" rx="14" fill="#1B1B2E"></rect>
+      <rect x="11" y="11" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+      <rect x="26" y="11" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+      <rect x="41" y="11" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+      <rect x="11" y="26" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+      <rect x="26" y="26" width="12" height="12" rx="3" fill="#F2E9E4"></rect>
+      <rect x="11" y="41" width="12" height="12" rx="3" fill="#C9ADA7"></rect>
+    </svg>
+    Friday
+  </a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How it works</a>
+    <a href="#pricing">Pricing</a>
+  </nav>
+  <div class="nav-cta">
+    <a href={waitlistUrl} class="btn btn-primary btn-sm" data-waitlist>Join the waitlist</a>
+  </div>
+</header>

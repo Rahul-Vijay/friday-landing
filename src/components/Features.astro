@@ -1,0 +1,25 @@
+---
+import { features } from "../content";
+---
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <p class="eyebrow">Features</p>
+      <h2>Everything the harness does</h2>
+      <p>Friday hires the agents, checks their work, and gets you to done.</p>
+    </div>
+
+    <div class="feature-grid">
+      {
+        features.map((f) => (
+          <article class="feature-card" data-reveal>
+            <div class="feature-icon" set:html={f.icon} />
+            <h3>{f.title}</h3>
+            <p>{f.body}</p>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
