@@ -18,3 +18,6 @@ pnpm-debug.log*
 
 # macOS-generated files
 .DS_Store
+
+# cloudflare wrangler local state
+.wrangler/

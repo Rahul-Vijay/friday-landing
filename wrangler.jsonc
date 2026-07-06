@@ -1,0 +1,9 @@
+// Cloudflare Workers config: serve the built Astro site as static assets.
+// Used by `npx wrangler deploy` in Cloudflare's Workers Builds CI.
+{
+  "name": "friday-landing",
+  "compatibility_date": "2026-07-06",
+  "assets": {
+    "directory": "./dist"
+  }
+}
