@@ -18,6 +18,16 @@ const { Content } = await render(post);
 const fmt = (d: Date) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
+// Accept a bare video ID, youtube.com/watch?v=, youtu.be/, shorts/, or embed/ URLs.
+const youtubeId = (() => {
+  const raw = post.data.youtube?.trim();
+  if (!raw) return null;
+  const m = raw.match(
+    /(?:youtube\.com\/(?:watch\?.*?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,20})/
+  );
+  return m ? m[1] : raw;
+})();
+
 const postSchema = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -28,6 +38,16 @@ const postSchema = {
   url: new URL(`/blog/${post.id}/`, Astro.site).href,
   author: { "@type": "Organization", name: "Friday", url: "https://getfriday.dev/" },
   publisher: { "@id": "https://getfriday.dev/#organization" },
+  ...(youtubeId && {
+    video: {
+      "@type": "VideoObject",
+      name: post.data.title,
+      description: post.data.description,
+      thumbnailUrl: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
+      uploadDate: post.data.pubDate.toISOString(),
+      embedUrl: `https://www.youtube-nocookie.com/embed/${youtubeId}`,
+    },
+  }),
 };
 ---
 
@@ -45,6 +65,29 @@ const postSchema = {
             {fmt(post.data.pubDate)}
           </time>
         </header>
+        {
+          youtubeId && (
+            <div class="post-video" data-reveal>
+              <button
+                class="post-video-facade"
+                type="button"
+                data-yt={youtubeId}
+                aria-label={`Play video: ${post.data.title}`}
+              >
+                <img
+                  src={`https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`}
+                  alt={`Video: ${post.data.title}`}
+                  loading="lazy"
+                />
+                <span class="post-video-play" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M8 5.5v13l11-6.5z" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+          )
+        }
         <div class="post-prose" data-reveal>
           <Content />
         </div>
@@ -61,4 +104,22 @@ const postSchema = {
   </main>
   <Footer />
   <script type="application/ld+json" set:html={JSON.stringify(postSchema)} />
+  <script>
+    // Click-to-play: swap the thumbnail facade for the real YouTube iframe
+    // only when the reader asks for it, so posts don't pay the ~1MB
+    // YouTube embed cost on load.
+    document.querySelectorAll(".post-video-facade").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = (btn as HTMLElement).dataset.yt;
+        const frame = document.createElement("iframe");
+        frame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+        frame.title = "YouTube video";
+        frame.allow =
+          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+        frame.allowFullscreen = true;
+        btn.replaceWith(frame);
+        frame.parentElement?.classList.add("is-playing");
+      });
+    });
+  </script>
 </Layout>

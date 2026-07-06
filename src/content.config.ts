@@ -9,6 +9,9 @@ const blog = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
+    // YouTube video ID or any youtube.com/youtu.be URL; renders a
+    // click-to-play embed at the top of the post.
+    youtube: z.string().optional(),
   }),
 });
 
