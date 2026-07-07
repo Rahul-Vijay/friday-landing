@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Space Grotesk";
+        src: url("fonts/space-grotesk.woff2") format("woff2");
+        font-weight: 300 700;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "JetBrains Mono";
+        src: url("fonts/jetbrains-mono.woff2") format("woff2");
+        font-weight: 100 800;
+        font-style: normal;
+      }
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #0c0c17;
+        font-family: "Space Grotesk", sans-serif;
+      }
+      .scene {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background-color: #0c0c17;
+      }
+      #s1 { z-index: 1; }
+      #s2 { z-index: 2; opacity: 0; }
+      #s3 { z-index: 3; opacity: 0; }
+      #s4 { z-index: 4; opacity: 0; }
+      #s5 { z-index: 5; opacity: 0; }
+
+      /* ---- shared chrome ---- */
+      .grid-tex {
+        position: absolute; inset: 0;
+        background-image: radial-gradient(rgba(242,233,228,0.09) 1.4px, rgba(242,233,228,0) 1.4px);
+        background-size: 30px 30px;
+      }
+      .glow {
+        position: absolute;
+        width: 1000px; height: 720px;
+        background: radial-gradient(closest-side, rgba(201,173,167,0.17), rgba(201,173,167,0));
+      }
+      .ghost {
+        position: absolute;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        color: rgba(242,233,228,0.07);
+        line-height: 0.85;
+      }
+      .meta {
+        position: absolute;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 21px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        color: #aaa0b0;
+      }
+      .meta i { color: #c9ada7; font-style: normal; }
+      .meta-tl { top: 52px; left: 64px; }
+      .meta-tr { top: 52px; right: 64px; }
+      .meta-bl { bottom: 48px; left: 64px; }
+      .caption {
+        position: absolute;
+        left: 0; right: 0;
+        text-align: center;
+        font-size: 46px;
+        font-weight: 600;
+        color: #f2e9e4;
+        letter-spacing: -0.01em;
+      }
+      .caption em { font-style: normal; color: #c9ada7; }
+      .headline {
+        position: absolute;
+        top: 96px; left: 0; right: 0;
+        text-align: center;
+        font-size: 50px;
+        font-weight: 700;
+        color: #f2e9e4;
+        letter-spacing: -0.02em;
+      }
+      .headline em { font-style: normal; color: #c9ada7; }
+      .titlebar {
+        display: flex; align-items: center; justify-content: space-between;
+        height: 52px; padding: 0 22px;
+        background: #131322;
+        border-bottom: 2px solid rgba(242,233,228,0.12);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 19px; font-weight: 600;
+        color: #aaa0b0;
+        letter-spacing: 0.06em;
+      }
+      .titlebar b { width: 11px; height: 11px; border-radius: 50%; background: #32334f; }
+
+      /* ---- scene 1: the goal ---- */
+      #s1 .glow { top: 60px; left: 460px; }
+      #s1 .ghost { font-size: 430px; right: -70px; bottom: -80px; }
+      .composer-win {
+        position: absolute;
+        left: 380px; top: 400px;
+        width: 1160px;
+        background: #1b1b2e;
+        border: 2px solid rgba(242,233,228,0.15);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 40px 110px rgba(0,0,0,0.5);
+      }
+      .composer-row {
+        display: flex; align-items: center; gap: 24px;
+        padding: 26px 28px;
+      }
+      .c-plus {
+        width: 58px; height: 58px; flex: none;
+        border-radius: 14px;
+        background: #25263d;
+        color: #d0c3ca;
+        font-size: 34px; font-weight: 500;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .c-text {
+        flex: 1;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 30px;
+        color: #f2e9e4;
+        white-space: nowrap;
+      }
+      .c-text .ch { opacity: 0; }
+      .c-cursor { color: #c9ada7; }
+      .c-hold {
+        flex: none;
+        padding: 16px 26px;
+        border-radius: 13px;
+        background: #25263d;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        color: #d0c3ca;
+        display: flex; align-items: center; gap: 12px;
+      }
+      .c-hold u { width: 10px; height: 10px; border-radius: 50%; background: #c9ada7; }
+      .c-go {
+        flex: none;
+        padding: 16px 34px;
+        border-radius: 13px;
+        background: #c9ada7;
+        color: #22223b;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 24px; font-weight: 600;
+      }
+      #s1 .caption { top: 680px; }
+
+      /* ---- scene 2: the split ---- */
+      #s2 .glow { top: -160px; left: 460px; }
+      #s2 .ghost { font-size: 400px; left: -60px; bottom: -70px; }
+      .goal-chip {
+        position: absolute;
+        left: 560px; top: 118px;
+        width: 800px; height: 74px;
+        border-radius: 15px;
+        background: #1b1b2e;
+        border: 2px solid rgba(201,173,167,0.44);
+        display: flex; align-items: center; justify-content: center; gap: 18px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 26px; color: #f2e9e4;
+      }
+      .goal-chip s { text-decoration: none; color: #c9ada7; }
+      #s2 svg, #s3 svg, #s4 svg { position: absolute; inset: 0; }
+      .task-card {
+        position: absolute;
+        top: 495px;
+        width: 380px; height: 130px;
+        border-radius: 16px;
+        background: #131322;
+        border: 2px solid rgba(242,233,228,0.15);
+        padding: 24px 26px;
+        box-sizing: border-box;
+      }
+      .task-card h4 { margin: 0 0 10px; font-size: 31px; font-weight: 600; color: #f2e9e4; letter-spacing: -0.01em; }
+      .task-card p { margin: 0; font-family: "JetBrains Mono", monospace; font-size: 19px; color: #aaa0b0; letter-spacing: 0.05em; }
+      #s2 .caption { top: 810px; }
+
+      /* ---- scene 3: the hire ---- */
+      #s3 .glow { top: 180px; left: 900px; }
+      #s3 .ghost { font-size: 400px; right: -50px; top: -90px; }
+      .task-chip {
+        position: absolute;
+        left: 200px;
+        width: 360px; height: 92px;
+        border-radius: 14px;
+        background: #131322;
+        border: 2px solid rgba(242,233,228,0.15);
+        display: flex; align-items: center; gap: 18px;
+        padding: 0 26px;
+        box-sizing: border-box;
+        font-size: 28px; font-weight: 600; color: #f2e9e4;
+      }
+      .task-chip span { font-family: "JetBrains Mono", monospace; font-size: 18px; font-weight: 400; color: #aaa0b0; margin-left: auto; }
+      .agent-card {
+        position: absolute;
+        left: 1360px;
+        width: 420px; height: 150px;
+        border-radius: 16px;
+        background: #1b1b2e;
+        border: 2px solid rgba(242,233,228,0.15);
+        padding: 26px 30px;
+        box-sizing: border-box;
+      }
+      .agent-card h4 { margin: 0 0 10px; font-size: 33px; font-weight: 700; color: #f2e9e4; letter-spacing: -0.01em; }
+      .agent-card h4 i { font-style: normal; color: #c9ada7; }
+      .agent-card p { margin: 0; font-size: 24px; color: #d0c3ca; }
+      #s3 .caption { top: 920px; font-size: 40px; }
+
+      /* ---- scene 4: the loop ---- */
+      #s4 .glow { top: 240px; left: 460px; }
+      #s4 .ghost { font-size: 400px; left: -60px; top: -90px; }
+      .loop-node {
+        position: absolute;
+        width: 220px; height: 68px;
+        margin-left: -110px; margin-top: -34px;
+        border-radius: 14px;
+        background: #1b1b2e;
+        border: 2px solid rgba(242,233,228,0.22);
+        display: flex; align-items: center; justify-content: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 25px; font-weight: 600;
+        letter-spacing: 0.1em;
+        color: #f2e9e4;
+      }
+      #node-build { left: 960px; top: 310px; }
+      #node-verify { left: 1176px; top: 685px; }
+      #node-fix { left: 744px; top: 685px; }
+      .status-chip {
+        position: absolute;
+        left: 960px; top: 548px;
+        width: 520px; height: 76px;
+        margin-left: -260px; margin-top: -38px;
+        border-radius: 15px;
+        display: flex; align-items: center; justify-content: center; gap: 16px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 26px; font-weight: 600;
+        box-sizing: border-box;
+      }
+      #chip-fail {
+        background: rgba(239,140,153,0.13);
+        border: 2px solid #ef8c99;
+        color: #ef8c99;
+        opacity: 0;
+      }
+      #chip-pass {
+        background: rgba(155,212,160,0.13);
+        border: 2px solid #9bd4a0;
+        color: #9bd4a0;
+        opacity: 0;
+      }
+      #s4 .caption { top: 930px; font-size: 40px; }
+
+      /* ---- scene 5: done ---- */
+      #s5 .glow { top: 160px; left: 460px; width: 1000px; }
+      .s5-stack {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 38px;
+        padding-bottom: 40px;
+        box-sizing: border-box;
+      }
+      .s5-mark { width: 150px; height: 150px; }
+      .s5-title {
+        font-size: 82px; font-weight: 700;
+        color: #f2e9e4;
+        letter-spacing: -0.025em;
+        text-align: center;
+      }
+      .s5-title em { font-style: normal; color: #c9ada7; }
+      .s5-row { display: flex; align-items: center; gap: 26px; }
+      .s5-url {
+        padding: 18px 36px;
+        border-radius: 14px;
+        background: #c9ada7;
+        color: #22223b;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 28px; font-weight: 600;
+      }
+      .s5-badge {
+        padding: 18px 30px;
+        border-radius: 14px;
+        border: 2px solid #9bd4a0;
+        color: #9bd4a0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 25px; font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="agentic-loop"
+      data-width="1920"
+      data-height="1080"
+      data-start="0"
+      data-duration="24"
+    >
+      <!-- ============ SCENE 1 · the goal ============ -->
+      <div id="s1" class="scene" data-layout-allow-overflow>
+        <div class="grid-tex"></div>
+        <div class="glow" id="s1-glow"></div>
+        <div class="ghost" data-layout-ignore>GOAL</div>
+        <div class="meta meta-tl" id="s1-mtl">friday <i>—</i> composer</div>
+        <div class="meta meta-tr" id="s1-mtr">getfriday.dev</div>
+        <div class="meta meta-bl" data-layout-allow-overlap id="s1-mbl"><i>01</i> · the goal</div>
+        <div class="composer-win" id="s1-window">
+          <div class="titlebar"><span>friday — new goal</span><b></b></div>
+          <div class="composer-row">
+            <div class="c-plus">+</div>
+            <div class="c-text" id="s1-goal"></div>
+            <div class="c-hold"><u></u>hold</div>
+            <div class="c-go" id="s1-go">go</div>
+          </div>
+        </div>
+        <div class="caption" id="s1-cap">You set <em>one goal.</em></div>
+      </div>
+
+      <!-- ============ SCENE 2 · the split ============ -->
+      <div id="s2" class="scene" data-layout-allow-overflow>
+        <div class="grid-tex"></div>
+        <div class="glow"></div>
+        <div class="ghost" data-layout-ignore>SPLIT</div>
+        <div class="meta meta-tl" id="s2-mtl">friday <i>—</i> planning</div>
+        <div class="meta meta-tr" id="s2-mtr">getfriday.dev</div>
+        <div class="meta meta-bl" data-layout-allow-overlap id="s2-mbl"><i>02</i> · the split</div>
+        <div class="goal-chip" id="s2-chip"><s>→</s> a landing page for my product</div>
+        <svg viewBox="0 0 1920 1080" fill="none">
+          <path id="s2-stem" d="M960 192 L960 300" stroke="#c9ada7" stroke-width="3" stroke-dasharray="120" stroke-dashoffset="120"/>
+          <path class="s2-branch" d="M960 300 C960 410, 330 396, 330 493" stroke="#9a8c98" stroke-width="3" stroke-dasharray="1000" stroke-dashoffset="1000"/>
+          <path class="s2-branch" d="M960 300 C960 400, 750 400, 750 493" stroke="#9a8c98" stroke-width="3" stroke-dasharray="1000" stroke-dashoffset="1000"/>
+          <path class="s2-branch" d="M960 300 C960 400, 1170 400, 1170 493" stroke="#9a8c98" stroke-width="3" stroke-dasharray="1000" stroke-dashoffset="1000"/>
+          <path class="s2-branch" d="M960 300 C960 410, 1590 396, 1590 493" stroke="#9a8c98" stroke-width="3" stroke-dasharray="1000" stroke-dashoffset="1000"/>
+        </svg>
+        <div class="task-card" style="left:140px"><div class="tc-inner"><h4>Research</h4><p>task-01 · queued</p></div></div>
+        <div class="task-card" style="left:560px"><div class="tc-inner"><h4>Copy</h4><p>task-02 · queued</p></div></div>
+        <div class="task-card" style="left:980px"><div class="tc-inner"><h4>Design</h4><p>task-03 · queued</p></div></div>
+        <div class="task-card" style="left:1400px"><div class="tc-inner"><h4>Build &amp; review</h4><p>task-04 · queued</p></div></div>
+        <div class="caption" id="s2-cap">Friday splits it into <em>tasks.</em></div>
+      </div>
+
+      <!-- ============ SCENE 3 · the hire ============ -->
+      <div id="s3" class="scene" data-layout-allow-overflow>
+        <div class="grid-tex"></div>
+        <div class="glow"></div>
+        <div class="ghost" data-layout-ignore>HIRE</div>
+        <div class="headline" id="s3-head">Each task goes to the agent <em>that does it best.</em></div>
+        <div class="meta meta-bl" data-layout-allow-overlap id="s3-mbl"><i>03</i> · the hire</div>
+        <svg viewBox="0 0 1920 1080" fill="none">
+          <path class="s3-line" d="M560 306 C900 306, 1010 745, 1360 745" stroke="#c9ada7" stroke-width="3" stroke-dasharray="1400" stroke-dashoffset="1400"/>
+          <path class="s3-line" d="M560 436 C900 436, 1010 322, 1360 322" stroke="#c9ada7" stroke-width="3" stroke-dasharray="1400" stroke-dashoffset="1400"/>
+          <path class="s3-line" d="M560 566 C900 566, 1030 340, 1360 340" stroke="#c9ada7" stroke-width="3" stroke-dasharray="1400" stroke-dashoffset="1400"/>
+          <path class="s3-line" d="M560 696 C900 696, 1010 535, 1360 535" stroke="#c9ada7" stroke-width="3" stroke-dasharray="1400" stroke-dashoffset="1400"/>
+        </svg>
+        <div class="task-chip" style="top:260px">Research<span>task-01</span></div>
+        <div class="task-chip" style="top:390px">Copy<span>task-02</span></div>
+        <div class="task-chip" style="top:520px">Design<span>task-03</span></div>
+        <div class="task-chip" style="top:650px">Build &amp; review<span>task-04</span></div>
+        <div class="agent-card" id="agent-claude" style="top:250px"><h4>Claude <i>·</i> hired</h4><p>design, writing, judgment</p></div>
+        <div class="agent-card" id="agent-codex" style="top:460px"><h4>Codex <i>·</i> hired</h4><p>code &amp; code review</p></div>
+        <div class="agent-card" id="agent-opencode" style="top:670px"><h4>OpenCode <i>·</i> hired</h4><p>cheap, fast, high volume</p></div>
+        <div class="caption" id="s3-cap">You never pick a model. <em>Friday routes.</em></div>
+      </div>
+
+      <!-- ============ SCENE 4 · the loop ============ -->
+      <div id="s4" class="scene" data-layout-allow-overflow>
+        <div class="grid-tex"></div>
+        <div class="glow"></div>
+        <div class="ghost" data-layout-ignore>LOOP</div>
+        <div class="headline" id="s4-head">Then it <em>loops.</em></div>
+        <div class="meta meta-bl" data-layout-allow-overlap id="s4-mbl"><i>04</i> · the loop</div>
+        <svg viewBox="0 0 1920 1080" fill="none">
+          <circle id="s4-ring" cx="960" cy="560" r="250" stroke="rgba(242,233,228,0.14)" stroke-width="2" stroke-dasharray="10 14"/>
+          <path class="s4-arc" d="M 960 310 A 250 250 0 0 1 1176 685" stroke="#c9ada7" stroke-width="4" stroke-dasharray="560" stroke-dashoffset="560"/>
+          <path class="s4-arc" d="M 1176 685 A 250 250 0 0 1 744 685" stroke="#c9ada7" stroke-width="4" stroke-dasharray="560" stroke-dashoffset="560"/>
+          <path class="s4-arc" d="M 744 685 A 250 250 0 0 1 960 310" stroke="#c9ada7" stroke-width="4" stroke-dasharray="560" stroke-dashoffset="560"/>
+        </svg>
+        <div class="loop-node" id="node-build">BUILD</div>
+        <div class="loop-node" id="node-verify">VERIFY</div>
+        <div class="loop-node" id="node-fix">FIX</div>
+        <div class="status-chip" id="chip-fail">✗ hero overflows on mobile</div>
+        <div class="status-chip" id="chip-pass">✓ fixed. verified.</div>
+        <div class="caption" id="s4-cap">Until the work is <em>actually done.</em></div>
+      </div>
+
+      <!-- ============ SCENE 5 · done ============ -->
+      <div id="s5" class="scene" data-layout-allow-overflow>
+        <div class="grid-tex"></div>
+        <div class="glow" id="s5-glow"></div>
+        <div class="meta meta-bl" data-layout-allow-overlap id="s5-mbl"><i>05</i> · done</div>
+        <div class="s5-stack">
+          <svg class="s5-mark" id="s5-mark" viewBox="0 0 64 64">
+            <rect x="0" y="0" width="64" height="64" rx="14" fill="#1b1b2e"></rect>
+            <rect x="11" y="11" width="12" height="12" rx="3" fill="#f2e9e4"></rect>
+            <rect x="26" y="11" width="12" height="12" rx="3" fill="#f2e9e4"></rect>
+            <rect x="41" y="11" width="12" height="12" rx="3" fill="#f2e9e4"></rect>
+            <rect x="11" y="26" width="12" height="12" rx="3" fill="#f2e9e4"></rect>
+            <rect x="26" y="26" width="12" height="12" rx="3" fill="#f2e9e4"></rect>
+            <rect x="11" y="41" width="12" height="12" rx="3" fill="#c9ada7"></rect>
+          </svg>
+          <div class="s5-title" id="s5-title">Set a goal. <em>Friday hires the crew.</em></div>
+          <div class="s5-row" id="s5-row">
+            <div class="s5-url">getfriday.dev</div>
+            <div class="s5-badge">✓ verified &amp; done</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      /* ============ SCENE 1 · the goal (0 – 4.5) ============ */
+      tl.fromTo("#s1-window", { y: 46, opacity: 0, scale: 0.97 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: "expo.out" }, 0.2);
+      tl.fromTo("#s1-mtl", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, 0.45);
+      tl.fromTo("#s1-mtr", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, 0.55);
+      tl.fromTo("#s1-mbl", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 0.6);
+      tl.fromTo("#s1 .ghost", { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 1.1, ease: "sine.out" }, 0.3);
+
+      // goal types itself on
+      (function () {
+        var text = "a landing page for my product";
+        var host = document.getElementById("s1-goal");
+        var html = '<span class="ch" style="color:#766f82">&rarr;&nbsp;</span>';
+        for (var i = 0; i < text.length; i++) {
+          html += '<span class="ch">' + (text[i] === " " ? "&nbsp;" : text[i]) + "</span>";
+        }
+        html += '<span class="c-cursor" id="s1-cursor">&#9615;</span>';
+        host.innerHTML = html;
+      })();
+      tl.fromTo("#s1 .ch", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none", stagger: 0.042 }, 1.0);
+      tl.fromTo("#s1-cursor", { opacity: 1 }, { opacity: 0, duration: 0.45, ease: "steps(1)", yoyo: true, repeat: 7 }, 0.9);
+      // go button acknowledges the goal
+      tl.fromTo("#s1-go", { scale: 1 }, { scale: 1.12, duration: 0.16, ease: "back.out(2.5)", yoyo: true, repeat: 1 }, 2.75);
+      tl.fromTo("#s1-cap", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 3.05);
+      // ambient: glow breathes
+      tl.fromTo("#s1-glow", { scale: 0.94 }, { scale: 1.06, duration: 2.1, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.2);
+
+      /* ---- T1: vertical push (4.5) ---- */
+      tl.to("#s1", { y: -1080, duration: 0.5, ease: "power3.inOut" }, 4.5);
+      tl.fromTo("#s2", { y: 1080, opacity: 1 }, { y: 0, duration: 0.5, ease: "power3.inOut" }, 4.5);
+      tl.set("#s1", { opacity: 0, visibility: "hidden" }, 5.05);
+
+      /* ============ SCENE 2 · the split (5.0 – 9.5) ============ */
+      tl.fromTo("#s2-chip", { y: -50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 5.15);
+      tl.fromTo("#s2-mtl", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 5.3);
+      tl.fromTo("#s2-mtr", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 5.4);
+      tl.fromTo("#s2-mbl", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 5.45);
+      tl.fromTo("#s2 .ghost", { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 1.1, ease: "sine.out" }, 5.3);
+      tl.to("#s2-stem", { strokeDashoffset: 0, duration: 0.3, ease: "power1.inOut" }, 5.55);
+      tl.to(".s2-branch", { strokeDashoffset: 0, duration: 0.55, ease: "power1.out", stagger: 0.1 }, 5.8);
+      tl.fromTo("#s2 .task-card",
+        { y: 70, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.5)", stagger: 0.12 }, 6.0);
+      tl.fromTo("#s2-cap", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 7.1);
+      // ambient: cards float gently (on inner, entrance was on card)
+      tl.fromTo("#s2 .tc-inner", { y: 0 }, { y: -7, duration: 1.0, ease: "sine.inOut", yoyo: true, repeat: 1, stagger: 0.15 }, 7.4);
+
+      /* ---- T2: vertical push (9.5) ---- */
+      tl.to("#s2", { y: -1080, duration: 0.5, ease: "power3.inOut" }, 9.5);
+      tl.fromTo("#s3", { y: 1080, opacity: 1 }, { y: 0, duration: 0.5, ease: "power3.inOut" }, 9.5);
+      tl.set("#s2", { opacity: 0, visibility: "hidden" }, 10.05);
+
+      /* ============ SCENE 3 · the hire (10.0 – 15.0) ============ */
+      tl.fromTo("#s3-head", { y: -44, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "expo.out" }, 10.2);
+      tl.fromTo("#s3-mbl", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 10.35);
+      tl.fromTo("#s3 .ghost", { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 1.1, ease: "sine.out" }, 10.4);
+      tl.fromTo("#s3 .task-chip",
+        { x: -80, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, ease: "power3.out", stagger: 0.09 }, 10.5);
+      tl.fromTo("#s3 .agent-card",
+        { x: 90, opacity: 0, scale: 0.96 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.3)", stagger: 0.14 }, 10.85);
+      tl.to(".s3-line", { strokeDashoffset: 0, duration: 0.6, ease: "power1.inOut", stagger: 0.16 }, 11.55);
+      // each agent lights up as its hires connect
+      tl.to("#agent-opencode", { borderColor: "#c9ada7", duration: 0.25, ease: "power1.out" }, 12.05);
+      tl.to("#agent-claude", { borderColor: "#c9ada7", duration: 0.25, ease: "power1.out" }, 12.3);
+      tl.to("#agent-codex", { borderColor: "#c9ada7", duration: 0.25, ease: "power1.out" }, 12.55);
+      tl.fromTo("#s3-cap", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 12.9);
+
+      /* ---- T3: blur through, topic shift (15.0) ---- */
+      tl.to("#s3", { filter: "blur(15px)", scale: 1.05, opacity: 0, duration: 0.4, ease: "power2.in" }, 15.0);
+      tl.fromTo("#s4",
+        { filter: "blur(15px)", scale: 0.95, opacity: 0 },
+        { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.45, ease: "power2.out" }, 15.2);
+      tl.set("#s3", { visibility: "hidden" }, 15.7);
+
+      /* ============ SCENE 4 · the loop (15.6 – 20.0) ============ */
+      tl.fromTo("#s4-head", { y: -40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 15.8);
+      tl.fromTo("#s4-mbl", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 15.9);
+      tl.fromTo("#s4 .ghost", { y: -50, opacity: 0 }, { y: 0, opacity: 1, duration: 1.0, ease: "sine.out" }, 15.9);
+      tl.fromTo("#s4-ring", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power1.out" }, 16.0);
+      tl.fromTo("#s4 .loop-node",
+        { scale: 0.6, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.8)", stagger: 0.12 }, 16.15);
+      // pass 1: build -> verify catches a failure -> fix
+      tl.to("#s4 .s4-arc", { strokeDashoffset: 0, duration: 0.45, ease: "power1.inOut", stagger: 0.42 }, 16.7);
+      tl.fromTo("#chip-fail", { scale: 0.85, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.6)" }, 17.35);
+      tl.fromTo("#node-verify", { borderColor: "rgba(242,233,228,0.22)" }, { borderColor: "#ef8c99", duration: 0.25, ease: "power1.out" }, 17.35);
+      // pass 2: the loop runs again and comes back green
+      tl.fromTo("#s4 .s4-arc", { strokeDashoffset: 560 }, { strokeDashoffset: 0, duration: 0.34, ease: "power1.inOut", stagger: 0.3 }, 18.35);
+      tl.to("#chip-fail", { scaleY: 0, opacity: 0, duration: 0.2, ease: "power2.in" }, 19.0);
+      tl.fromTo("#chip-pass", { scaleY: 0.2, opacity: 0 }, { scaleY: 1, opacity: 1, duration: 0.32, ease: "back.out(1.7)" }, 19.2);
+      tl.to("#node-verify", { borderColor: "#9bd4a0", duration: 0.25, ease: "power1.out" }, 19.2);
+      tl.fromTo("#s4-cap", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, 19.25);
+
+      /* ---- T4: gentle blur crossfade (20.2) ---- */
+      tl.to("#s4", { filter: "blur(14px)", opacity: 0, duration: 0.6, ease: "sine.inOut" }, 20.2);
+      tl.fromTo("#s5",
+        { filter: "blur(14px)", opacity: 0 },
+        { filter: "blur(0px)", opacity: 1, duration: 0.7, ease: "sine.out" }, 20.4);
+      tl.set("#s4", { visibility: "hidden" }, 21.1);
+
+      /* ============ SCENE 5 · done (20.8 – 24) ============ */
+      tl.fromTo("#s5-mark", { scale: 0.55, opacity: 0, rotation: -6 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 0.6, ease: "back.out(1.6)" }, 21.0);
+      tl.fromTo("#s5-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 21.25);
+      tl.fromTo("#s5-row", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power2.out" }, 21.55);
+      tl.fromTo("#s5-mbl", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 21.6);
+      // ambient: glow breathes once
+      tl.fromTo("#s5-glow", { scale: 0.95 }, { scale: 1.05, duration: 1.4, ease: "sine.inOut", yoyo: true, repeat: 1 }, 21.2);
+      // final scene may exit: settle to black
+      tl.to("#s5 .s5-stack, #s5 .meta, #s5 .grid-tex, #s5 .glow", { opacity: 0, duration: 0.7, ease: "power1.in" }, 23.25);
+
+      window.__timelines["agentic-loop"] = tl;
+    </script>
+  </body>
+</html>
